@@ -21,7 +21,60 @@ public sealed partial class SLBodySystem : EntitySystem
     public override void Initialize()
     {
         SubscribeLocalEvent<SLBodyComponent, MapInitEvent>(OnBodyMapInit);
+        SubscribeLocalEvent<SLBodyComponent, AfterAutoHandleStateEvent>(OnBodyHandleState);
+        SubscribeLocalEvent<SLBodyPartComponent, AfterAutoHandleStateEvent>(OnPartHandleState);
+        SubscribeLocalEvent<SLBodyPartComponent, SLBodyPartAddedEvent>(OnPartAdded);
+        SubscribeLocalEvent<SLBodyPartComponent, SLBodyPartRemovedEvent>(OnPartRemoved);
     }
+
+    /// <summary>
+    /// All parts of the body, root first, parents before children. Rebuilt from the part tree on demand,
+    /// so it is valid on the client as well. Do not attach or detach parts while iterating it.
+    /// </summary>
+    public IReadOnlyList<Entity<SLBodyPartComponent>> GetBodyParts(Entity<SLBodyComponent> body)
+    {
+        if (body.Comp.BodyPartsDirty)
+            RebuildBodyPartCache(body);
+        return body.Comp.BodyParts;
+    }
+
+    private void RebuildBodyPartCache(Entity<SLBodyComponent> body)
+    {
+        body.Comp.BodyParts.Clear();
+        body.Comp.BodyPartsDirty = false;
+        if (TryComp<SLBodyPartComponent>(body.Comp.RootPartEntity, out var root))
+            CollectBodyParts(body, (body.Comp.RootPartEntity, root));
+    }
+
+    private void CollectBodyParts(Entity<SLBodyComponent> body, Entity<SLBodyPartComponent> part)
+    {
+        body.Comp.BodyParts.Add(part);
+        if (!ContainerSystem.TryGetContainer(part, BodyContainerId, out var children))
+            return;
+        foreach (var child in children.ContainedEntities)
+        {
+            if (TryComp<SLBodyPartComponent>(child, out var childComp))
+                CollectBodyParts(body, (child, childComp));
+        }
+    }
+
+    private void MarkBodyPartsDirty(EntityUid body)
+    {
+        if (TryComp<SLBodyComponent>(body, out var bodyComp))
+            bodyComp.BodyPartsDirty = true;
+    }
+
+    private void OnBodyHandleState(Entity<SLBodyComponent> body, ref AfterAutoHandleStateEvent args)
+        => body.Comp.BodyPartsDirty = true;
+
+    private void OnPartHandleState(Entity<SLBodyPartComponent> part, ref AfterAutoHandleStateEvent args)
+        => MarkBodyPartsDirty(part.Comp.Body);
+
+    private void OnPartAdded(Entity<SLBodyPartComponent> part, ref SLBodyPartAddedEvent args)
+        => MarkBodyPartsDirty(part.Comp.Body);
+
+    private void OnPartRemoved(Entity<SLBodyPartComponent> part, ref SLBodyPartRemovedEvent args)
+        => MarkBodyPartsDirty(part.Comp.Body);
     private void OnBodyMapInit(Entity<SLBodyComponent> body, ref MapInitEvent args)
     {
         if (body.Comp.BodyBuilt) //We don't want to initialize body twice!
@@ -36,6 +89,7 @@ public sealed partial class SLBodySystem : EntitySystem
             return false; //body has already been built, or no valid prefab :(
         MakeBodyParts(body, prefabProto);
         body.Comp.BodyBuilt = true;
+        body.Comp.BodyPartsDirty = true;
         Dirty(body);
         RaiseLocalEvent(body, new BodyInitEvent());
         return true;
@@ -57,7 +111,6 @@ public sealed partial class SLBodySystem : EntitySystem
         BodyPartAddress address)
     {
         var children = EnsureChildren(newPart); //Create the root BodyPart container and ensure that sockets are properly setup!
-        body.Comp.BodyParts.Add(newPart); //cache the new bodypart
         newPart.Comp.Body = body;
         if (partDef.AttachedParts != null)
             foreach (var (socketId, def) in partDef.AttachedParts)

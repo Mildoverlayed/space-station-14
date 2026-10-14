@@ -3,13 +3,12 @@
 
 using System.Numerics;
 using Content.Shared._Starlight.Body.Prototypes;
-using Robust.Shared.Collections;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared._Starlight.Body.Components;
 
-[RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState(true)]
 public sealed partial class SLBodyComponent : Component
 {
     [DataField, AutoNetworkedField] public Vector2 RootOffset = Vector2.Zero;
@@ -17,6 +16,11 @@ public sealed partial class SLBodyComponent : Component
     [DataField, AutoNetworkedField] public bool BodyBuilt = false;
     [DataField, AutoNetworkedField] public EntityUid RootPartEntity = default;
 
-    //Cached list of all body parts for quick enumeration
-    [NonSerialized] public ValueList<Entity<SLBodyPartComponent>> BodyParts = new();
+    /// <summary>
+    /// Cached flat list of all body parts, rebuilt from the part tree when <see cref="BodyPartsDirty"/> is set.
+    /// Read it through <see cref="Systems.SLBodySystem.GetBodyParts"/>, never directly.
+    /// </summary>
+    [ViewVariables] internal readonly List<Entity<SLBodyPartComponent>> BodyParts = new();
+
+    [ViewVariables] internal bool BodyPartsDirty = true;
 }

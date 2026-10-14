@@ -9,7 +9,7 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Shared._Starlight.Body.Components;
 
-[RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState(true)]
 public sealed partial class SLBodyPartComponent : Component
 {
     [DataField, AutoNetworkedField] public ProtoId<BodyPartTypePrototype> PartType = default;

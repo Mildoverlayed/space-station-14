@@ -30,6 +30,8 @@ using Content.Shared.Body.Components;
 using Content.Shared.Body.Part;
 using Content.Server._Starlight.Administration.Systems;
 using Content.Server._Starlight.Medical.Body.Systems;
+using Content.Shared._Starlight.Body.Components;
+using Content.Shared.Prototypes;
 using Content.Shared._Starlight.Body.Systems;
 using Content.Server._Starlight.Antags.Components;
 using Content.Shared._Starlight.Station;
@@ -70,7 +72,6 @@ public sealed partial class StationSpawningSystem : SharedStationSpawningSystem
     [Dependency] private TransformSystem _xform = default!;
     private static readonly ProtoId<SpeciesPrototype> FallbackSpecies = "Human";
     private static readonly ProtoId<JobPrototype> FallbackJob = "Assistant";
-    private static readonly EntProtoId TestBodyPrototype = "SLBodyTest"; // Starlight
     #endregion
 
     // Starlight
@@ -193,11 +194,11 @@ public sealed partial class StationSpawningSystem : SharedStationSpawningSystem
         }
         else
         {
-            // Starlight
-            var appearanceOverride = SharedBodyVisualizerSystem.CreateAppearanceOverride(profile?.BodyEditorProfile);
+            // Starlight - species built on the new body system get the profile's body appearance
+            var appearanceOverride = _prototypeManager.Index<EntityPrototype>(species.Prototype).HasComponent<SLBodyComponent>(Factory)
+                ? SharedBodyVisualizerSystem.CreateAppearanceOverride(profile?.BodyEditorProfile)
+                : null;
             entity ??= SLSpawn(species.Prototype, coordinates, appearanceOverride);
-            // Starlight - TODO: debug-only test body for the new body system, remove before release
-            SLSpawn(TestBodyPrototype, coordinates, appearanceOverride);
         }
         // Starlight End
 

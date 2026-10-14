@@ -33,8 +33,10 @@ public sealed partial class BodyPartContainer : BaseContainer,
         _bodyPartComps.Add(toAdd);
         if (toAdd.Comp.ParentSocket != null)
         {
-            //Assert if the required socket either doesn't exist or already is occupied
-            DebugTools.Assert(_socketLookup.TryGetValue(toAdd.Comp.ParentSocket.Value, out var idx) && idx == -1);
+            // Sockets are registered on the server when the part is built; a client (or a loaded map) only learns
+            // them from the inserted parts, so an unknown socket is registered here instead of asserting.
+            DebugTools.Assert(!_socketLookup.TryGetValue(toAdd.Comp.ParentSocket.Value, out var idx) || idx == -1,
+                $"Socket {toAdd.Comp.ParentSocket.Value.SocketId} is already occupied");
             _socketLookup[toAdd.Comp.ParentSocket.Value] = _bodyParts.Count - 1;
         }
         var ev = new SLBodyPartAddedEvent(toAdd);
@@ -46,19 +48,8 @@ public sealed partial class BodyPartContainer : BaseContainer,
         var index = _bodyParts.IndexOf(toRemove);
         if (index == -1)
             return;
-        Entity<SLBodyPartComponent> removed;
-        if (_bodyParts.Count == 1) //if we only have a single part left, we don't need to worry about maintaining indices!
-        {
-            removed = (_bodyParts[index], _bodyPartComps[index]);
-            _bodyParts.RemoveAt(index);
-            _bodyPartComps.RemoveAt(index);
-            var removedEv = new SLBodyPartRemovedEvent(removed);
-            entMan.EventBus.RaiseLocalEvent(removed, ref removedEv);
-            _socketLookup.Clear();
-            return;
-        }
-        //We use remove swap so that we can maintain socket indices
-        removed = (_bodyParts.RemoveSwap(index), _bodyPartComps.RemoveSwap(index));
+        //We use remove swap so that we can maintain socket indices. Sockets stay registered (as empty) on removal.
+        Entity<SLBodyPartComponent> removed = (_bodyParts.RemoveSwap(index), _bodyPartComps.RemoveSwap(index));
         var ev = new SLBodyPartRemovedEvent(removed);
         entMan.EventBus.RaiseLocalEvent(removed, ref ev);
         if (removed.Comp.ParentSocket != null) //If our removed socket is in the lookup, remove the lookup
@@ -103,19 +94,18 @@ public sealed partial class BodyPartContainer : BaseContainer,
 
     public struct Enumerable(BodyPartContainer container) : IEnumerator<Entity<SLBodyPartComponent>>
     {
-        private int _index = 0;
+        private int _index = -1;
         private readonly BodyPartContainer _container = container;
-
 
         public bool MoveNext()
         {
+            if (_index + 1 >= _container.Count)
+                return false;
             _index++;
-            if (_index < _container.Count) return true;
-            _index = _container.Count - 1;
-            return false;
+            return true;
         }
 
-        public void Reset() => _index = 0;
+        public void Reset() => _index = -1;
 
         Entity<SLBodyPartComponent> IEnumerator<Entity<SLBodyPartComponent>>.Current => new Entity<SLBodyPartComponent>(_container._bodyParts[_index], _container._bodyPartComps[_index]);
 

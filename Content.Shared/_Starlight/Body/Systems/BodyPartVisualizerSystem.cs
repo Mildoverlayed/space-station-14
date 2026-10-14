@@ -49,9 +49,11 @@ public sealed class BodyPartVisualizerSystem : EntitySystem
             if (!marking.Visible || !_markings.TryGetMarking(marking, out var prototype))
                 continue;
 
-            var colorIndex = 0;
+            var spriteIndex = 0;
             foreach (var (key, sprite) in prototype.Sprites)
             {
+                // Several sprites may share one color slot (spriteColorIndexes).
+                var colorIndex = prototype.GetColorIndex(spriteIndex++);
                 var baked = new BodySpriteSpecifier
                 {
                     Sprite = sprite.Sprite,
@@ -62,7 +64,6 @@ public sealed class BodyPartVisualizerSystem : EntitySystem
                     ColorSource = sprite.ColorSource,
                 };
                 partVis.BodyVisualLayers[GetMarkingLayerKey(partVis, key)] = baked;
-                colorIndex++;
             }
         }
     }
