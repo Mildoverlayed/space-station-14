@@ -168,12 +168,22 @@ public partial class SharedBodySystem
         Entity<BodyComponent?> entity)
         where T : IComponent
     {
+        // Starlight: bodies on the new SLBody have no BodyComponent; GetBodyOrgans answers for them
+        if (entity.Comp == null && TryGetSLBody(entity.Owner, out _))
+            return CollectOrganComps<T>(GetBodyOrgans(entity.Owner));
+
         if (!Resolve(entity, ref entity.Comp))
             return new List<Entity<T, OrganComponent>>();
 
+        return CollectOrganComps<T>(GetBodyOrgans(entity.Owner, entity.Comp));
+    }
+
+    private List<Entity<T, OrganComponent>> CollectOrganComps<T>(IEnumerable<(EntityUid Id, OrganComponent Component)> organs)
+        where T : IComponent
+    {
         var query = GetEntityQuery<T>();
         var list = new List<Entity<T, OrganComponent>>(3);
-        foreach (var organ in GetBodyOrgans(entity.Owner, entity.Comp))
+        foreach (var organ in organs)
         {
             if (query.TryGetComponent(organ.Id, out var comp))
                 list.Add((organ.Id, comp, organ.Component));
@@ -196,7 +206,8 @@ public partial class SharedBodySystem
         [NotNullWhen(true)] out List<Entity<T, OrganComponent>>? comps)
         where T : IComponent
     {
-        if (!Resolve(entity.Owner, ref entity.Comp))
+        if (entity.Comp == null && !TryGetSLBody(entity.Owner, out _) // Starlight: SLBody bodies have no BodyComponent
+            && !Resolve(entity.Owner, ref entity.Comp))
         {
             comps = null;
             return false;

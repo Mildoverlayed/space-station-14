@@ -30,3 +30,8 @@
 
 - type: bodyPartSocket
   id: HumanoidFootSocket
+
+- type: bodyPartSocket
+  id: OrganSocket
+  internal: true
+  allowedTypes: [ Organ ]

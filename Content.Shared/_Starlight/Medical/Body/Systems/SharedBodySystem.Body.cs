@@ -250,6 +250,14 @@ public partial class SharedBodySystem
         EntityUid? bodyId,
         BodyComponent? body = null)
     {
+        // Starlight: bodies on the new SLBody answer from its part tree
+        if (body == null && TryGetSLBody(bodyId, out var slBody))
+        {
+            foreach (var organ in GetSLBodyOrgans(slBody))
+                yield return organ;
+            yield break;
+        }
+
         if (bodyId is null || !Resolve(bodyId.Value, ref body, logMissing: false))
             yield break;
 

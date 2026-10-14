@@ -37,15 +37,6 @@
   components:
   - type: SLBodyPart
     partType: HumanoidTorso
-    sockets:
-      Head: HumanoidHeadSocket
-      LeftArm: HumanoidArmSocket
-      RightArm: HumanoidArmSocket
-      LeftLeg: HumanoidLegSocket
-      RightLeg: HumanoidLegSocket
-      RightWing: HumanoidWingSocket
-      LeftWing: HumanoidWingSocket
-      Tail: HumanoidTailSocket
   - type: BodyPartVisualizer
     markingSets:
     - HumanChest
@@ -96,8 +87,6 @@
   components:
   - type: SLBodyPart
     partType: HumanoidArm
-    sockets:
-      Hand: HumanoidHandSocket
   - type: BodyPartVisualizer
     markingSets:
     - HumanArms
@@ -148,8 +137,6 @@
   components:
   - type: SLBodyPart
     partType: HumanoidLeg
-    sockets:
-      Foot: HumanoidFootSocket
   - type: BodyPartVisualizer
     markingSets:
     - HumanLegs

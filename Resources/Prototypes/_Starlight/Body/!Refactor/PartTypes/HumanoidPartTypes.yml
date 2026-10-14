@@ -33,3 +33,6 @@
 
 - type: bodyPartType
   id: HumanoidTail
+
+- type: bodyPartType
+  id: Organ

@@ -8,6 +8,8 @@
   - type: Sprite
     sprite: _Starlight/Mobs/Species/Doll/organs.rsi
   - type: Organ
+  - type: SLBodyPart
+    partType: Organ
   - type: Edible
   - type: Extractable
     grindableSolutionName: organ
@@ -117,6 +119,8 @@
     size: Small
     heldPrefix: brain
   - type: Organ
+  - type: SLBodyPart
+    partType: Organ
   - type: Input
     context: "ghost"
   - type: Brain
@@ -283,6 +287,8 @@
     sprite: _Starlight/Mobs/Species/Doll/organs.rsi
     state: shell
   - type: Organ
+  - type: SLBodyPart
+    partType: Organ
   - type: PhysicalComposition
     materialComposition:
       Plasteel: 25

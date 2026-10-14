@@ -24,6 +24,12 @@
      RightWing: HumanoidWingSocket
      LeftWing: HumanoidWingSocket
      Tail: HumanoidTailSocket
+     Heart: OrganSocket
+     Lungs: OrganSocket
+     Stomach: OrganSocket
+     Liver: OrganSocket
+     Kidneys: OrganSocket
+     Cavity: OrganSocket
 
 - type: entity
   id: SLPartHumanoidHead
@@ -35,6 +41,12 @@
     partType: HumanoidHead
     sockets:
       Eyes: HumanoidEyeSocket
+      Brain: OrganSocket
+      EyeOrgans: OrganSocket
+      Tongue: OrganSocket
+      EyeImplant: OrganSocket
+      NoseImplant: OrganSocket
+      BrainImplant: OrganSocket
       # TODO: split into LeftEye/RightEye once per-eye layers are ready
       #LeftEye: HumanoidEyeSocket
       #RightEye: HumanoidEyeSocket
@@ -58,6 +70,8 @@
   components:
   - type: SLBodyPart
     partType: HumanoidHand
+    sockets:
+     HandImplant: OrganSocket
   - type: BodyPartHand
 
 - type: entity

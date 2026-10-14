@@ -6,6 +6,8 @@ using System.Linq;
 using Content.IntegrationTests.Fixtures;
 using Content.Shared._Starlight.Body.Components;
 using Content.Shared._Starlight.Body.Systems;
+using Content.Shared.Body.Components;
+using Content.Shared.Body.Systems;
 using Content.Shared.Hands.Components;
 using Content.Shared.Movement.Components;
 using Robust.Shared.GameObjects;
@@ -34,8 +36,8 @@ public sealed class BodyAttachmentTest : GameTest
             var hands = entMan.GetComponent<HandsComponent>(uid);
             var movement = entMan.GetComponent<MovementSpeedModifierComponent>(uid);
 
-            // Torso, head, eyes, 2 arms, 2 hands, 2 legs, 2 feet.
-            Assert.That(bodySys.GetBodyParts(body), Has.Count.EqualTo(11));
+            // Torso, head, eyes, 2 arms, 2 hands, 2 legs, 2 feet + 8 organs.
+            Assert.That(bodySys.GetBodyParts(body), Has.Count.EqualTo(19));
             Assert.That(hands.Count, Is.EqualTo(2));
             var fullSpeed = movement.BaseWalkSpeed;
             Assert.That(fullSpeed, Is.GreaterThan(0f));
@@ -48,7 +50,7 @@ public sealed class BodyAttachmentTest : GameTest
 
             // Detaching the arm takes its hand along.
             Assert.That(bodySys.TryDetachPart(leftArm));
-            Assert.That(bodySys.GetBodyParts(body), Has.Count.EqualTo(9));
+            Assert.That(bodySys.GetBodyParts(body), Has.Count.EqualTo(17));
             Assert.That(hands.Count, Is.EqualTo(1));
             Assert.That(leftArm.Comp.Body, Is.EqualTo(EntityUid.Invalid));
             Assert.That(bodySys.GetSubtree(leftArm), Has.Count.EqualTo(2), "the hand stays attached to the severed arm");
@@ -56,7 +58,7 @@ public sealed class BodyAttachmentTest : GameTest
 
             // The socket is free again and accepts the arm back.
             Assert.That(bodySys.TryAttachPart(root, "LeftArm", leftArm));
-            Assert.That(bodySys.GetBodyParts(body), Has.Count.EqualTo(11));
+            Assert.That(bodySys.GetBodyParts(body), Has.Count.EqualTo(19));
             Assert.That(hands.Count, Is.EqualTo(2));
             Assert.That(leftArm.Comp.Body, Is.EqualTo(uid));
             Assert.That(bodySys.TryAttachPart(root, "LeftArm", leftArm), Is.False, "a part cannot be attached twice");
@@ -68,6 +70,44 @@ public sealed class BodyAttachmentTest : GameTest
 
             entMan.DeleteEntity(uid);
             entMan.DeleteEntity(leftLeg);
+        });
+    }
+
+    /// <summary>
+    /// Organs inside an SLBody are visible to the legacy organ API (metabolism, lungs, brain) and lose their body
+    /// when the part holding them is detached.
+    /// </summary>
+    [Test]
+    public async Task LegacyOrganBridge()
+    {
+        var server = Pair.Server;
+        var entMan = server.ResolveDependency<IEntityManager>();
+        var bodySys = entMan.System<SLBodySystem>();
+        var legacyBody = entMan.System<SharedBodySystem>();
+        var map = await Pair.CreateTestMap();
+
+        await server.WaitAssertion(() =>
+        {
+            var uid = entMan.SpawnEntity(TestBody, map.MapCoords);
+            var body = new Entity<SLBodyComponent>(uid, entMan.GetComponent<SLBodyComponent>(uid));
+
+            var organs = legacyBody.GetBodyOrgans(uid).ToList();
+            Assert.That(organs, Has.Count.EqualTo(8));
+            Assert.That(organs.All(o => o.Component.Body == uid), "every organ knows its body");
+            Assert.That(legacyBody.GetBodyOrganEntityComps<LungComponent>((uid, null)), Has.Count.EqualTo(1));
+            Assert.That(legacyBody.TryGetOrgansWithComponent<BrainComponent>((uid, null), out var brains));
+            var brain = brains!.Single();
+
+            var root = bodySys.GetBodyParts(body)[0];
+            Assert.That(bodySys.TryGetPartInSocket(root, "Head", out var head));
+            Assert.That(bodySys.IsInternal(bodySys.GetSubtree(head).First(p => p.Owner == brain.Owner)));
+
+            Assert.That(bodySys.TryDetachPart(head));
+            Assert.That(legacyBody.GetBodyOrgans(uid).Count(), Is.EqualTo(5), "head organs left with the head");
+            Assert.That(brain.Comp2.Body, Is.Null);
+
+            entMan.DeleteEntity(uid);
+            entMan.DeleteEntity(head);
         });
     }
 }

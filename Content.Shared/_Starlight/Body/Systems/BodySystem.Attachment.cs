@@ -92,25 +92,25 @@ public sealed partial class SLBodySystem
         if (!ContainerSystem.Remove(part.Owner, container, destination: destination))
             return false;
 
+        // Left-body handlers still see the old Parent/ParentSocket; they are cleared afterwards.
+        if (TryComp<SLBodyComponent>(part.Comp.Body, out var bodyComp))
+        {
+            Entity<SLBodyComponent> body = (part.Comp.Body, bodyComp);
+            body.Comp.BodyPartsDirty = true;
+            for (var i = subtree.Count - 1; i >= 0; i--)
+            {
+                var left = subtree[i];
+                left.Comp.Body = EntityUid.Invalid;
+                Dirty(left);
+                var ev = new BodyPartLeftBodyEvent(body, left);
+                RaiseLocalEvent(left, ref ev);
+                RaiseLocalEvent(body, ref ev);
+            }
+        }
+
         part.Comp.ParentSocket = null;
         part.Comp.Parent = EntityUid.Invalid;
         Dirty(part);
-
-        if (!TryComp<SLBodyComponent>(part.Comp.Body, out var bodyComp))
-            return true;
-
-        Entity<SLBodyComponent> body = (part.Comp.Body, bodyComp);
-        body.Comp.BodyPartsDirty = true;
-        for (var i = subtree.Count - 1; i >= 0; i--)
-        {
-            var left = subtree[i];
-            left.Comp.Body = EntityUid.Invalid;
-            Dirty(left);
-            var ev = new BodyPartLeftBodyEvent(body, left);
-            RaiseLocalEvent(left, ref ev);
-            RaiseLocalEvent(body, ref ev);
-        }
-
         return true;
     }
 

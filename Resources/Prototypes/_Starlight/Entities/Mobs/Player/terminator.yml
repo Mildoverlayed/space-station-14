@@ -166,6 +166,8 @@
     prototype: TerminatorEndoskeleton
   # lets it sit in the terminator flesh's brain slot
   - type: Organ
+  - type: SLBodyPart
+    partType: Organ
   - type: Brain
   - type: OrganEyes # to stop welding mask permablindness
   - type: TypingIndicator

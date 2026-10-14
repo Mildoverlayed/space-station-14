@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Starlight Network
 // SPDX-License-Identifier: MIT
 
-using Content.Shared._Starlight;
 using Content.Shared._Starlight.Body.Components;
 using Content.Shared._Starlight.Body.Editor;
 using Content.Shared._Starlight.Body.Preferences;
@@ -16,30 +15,29 @@ public sealed class BodyPartVisualizerSystem : EntitySystem
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly MarkingManager _markings = default!;
-    [Dependency] private readonly StarlightEntitySystem _sl = default!;
 
     public void BakeAppearance(
         Entity<SLBodyComponent> body,
         Entity<SLBodyPartComponent> part,
         BodyPartAddress address)
     {
-        if (!_sl.TryEntity<SLBodyComponent, BodyVisualizerComponent>(body, out var bodyVis))
+        if (!TryComp<BodyVisualizerComponent>(body, out var bodyVisComp))
             return;
 
-        if (!_sl.TryEntity<SLBodyPartComponent, BodyPartVisualizerComponent>(part, out var partVis))
+        if (!TryComp<BodyPartVisualizerComponent>(part, out var partVisComp))
             return;
 
-        var appearance = bodyVis.Comp2.Appearance;
+        var appearance = bodyVisComp.Appearance;
         if (appearance == null)
             return;
 
         if (TryGetPreference(appearance.Root, address, out var preference))
-            BakeMarkings(partVis.Comp2, preference);
+            BakeMarkings(partVisComp, preference);
 
-        foreach (var layer in partVis.Comp2.BodyVisualLayers)
-            partVis.Comp2.BodyVisualLayers[layer.Key] = WithColor(layer.Value, appearance, address);
+        foreach (var layer in partVisComp.BodyVisualLayers)
+            partVisComp.BodyVisualLayers[layer.Key] = WithColor(layer.Value, appearance, address);
 
-        Dirty(part, partVis.Comp2);
+        Dirty(part, partVisComp);
     }
 
     private void BakeMarkings(BodyPartVisualizerComponent partVis, BodyPartPreference preference)
