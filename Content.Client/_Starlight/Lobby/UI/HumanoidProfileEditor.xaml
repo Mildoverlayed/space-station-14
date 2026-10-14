@@ -267,8 +267,7 @@
                     <humanoid:MarkingPicker Name="Markings" IgnoreCategories="Hair,FacialHair" />
                 </ScrollContainer>
             </BoxContainer>
-            <!--  Starlight start  -->
-            <ui1:BodyTab Name="BodyTab" />
+            <!--  Starlight  -->
             <BoxContainer
                 Name="CyberneticsTab"
                 Margin="10"
@@ -280,6 +279,7 @@
                     <!-- Starlight edit End -->
                 </ScrollContainer>
             </BoxContainer>
+            <!--  Starlight start  -->
             <BoxContainer
                 Name="ICInfoTab"
                 Margin="10"
@@ -302,7 +302,7 @@
         </TabContainer>
     </BoxContainer>
     <!--  Right side  -->
-    <BoxContainer Name="PreviewPanel" Orientation="Vertical" VerticalExpand="True" VerticalAlignment="Center">
+    <BoxContainer Orientation="Vertical" VerticalExpand="True" VerticalAlignment="Center">
         <profile:ProfilePreviewSpriteView Name="SpriteView" Scale="8 8" Margin="4" SizeFlagsStretchRatio="1" />
         <BoxContainer Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 5">
             <Button Name="SpriteRotateLeft" Text="◀" StyleClasses="OpenRight" />

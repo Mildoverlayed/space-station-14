@@ -21,10 +21,9 @@ public sealed partial class HumanoidProfileEditor
         TabContainer.SetTabTitle(2, Loc.GetString("humanoid-profile-editor-antags-tab"));
         TabContainer.SetTabTitle(3, Loc.GetString("humanoid-profile-editor-traits-tab"));
         TabContainer.SetTabTitle(4, Loc.GetString("humanoid-profile-editor-markings-tab"));
-        TabContainer.SetTabTitle(BodyTabIndex, Loc.GetString("humanoid-profile-editor-body-tab"));
-        TabContainer.SetTabTitle(6, Loc.GetString("humanoid-profile-editor-cybernetics-tab"));
-        TabContainer.SetTabTitle(7, Loc.GetString("humanoid-profile-editor-ic-info-tab"));
-        TabContainer.SetTabTitle(8, Loc.GetString("humanoid-profile-editor-ooc-info-tab"));
+        TabContainer.SetTabTitle(5, Loc.GetString("humanoid-profile-editor-cybernetics-tab"));
+        TabContainer.SetTabTitle(6, Loc.GetString("humanoid-profile-editor-ic-info-tab"));
+        TabContainer.SetTabTitle(7, Loc.GetString("humanoid-profile-editor-ooc-info-tab"));
     }
 
     private RecordEditorGui CreateRecordEditorTab()
