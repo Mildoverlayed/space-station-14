@@ -14,7 +14,6 @@ using Robust.Shared.Utility;
 namespace Content.Shared._Starlight.Body.Systems;
 
 [UsedImplicitly]
-[SerializedType(nameof(BodyPartContainer))]
 public sealed partial class BodyPartContainer : BaseContainer,
     IEnumerable<Entity<SLBodyPartComponent>>,
     IEnumerable<(BodyPartSocket, Entity<SLBodyPartComponent>?)>

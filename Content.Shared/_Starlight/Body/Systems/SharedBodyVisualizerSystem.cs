@@ -6,7 +6,7 @@ using Content.Shared._Starlight.Body.Components;
 using Content.Shared._Starlight.Body.Editor;
 using Content.Shared._Starlight.Body.Events;
 using Content.Shared._Starlight.Body.Prototypes;
-using Content.Shared.Starlight.Utility;
+using Content.Shared._Starlight.Utility;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization.Markdown.Mapping;
@@ -23,8 +23,7 @@ public abstract partial class SharedBodyVisualizerSystem : EntitySystem
         return new ComponentRegistry
         {
             ["BodyVisualizer"] = new EntityPrototype.ComponentRegistryEntry(
-                new BodyVisualizerComponent { Appearance = appearance?.Clone() },
-                [])
+                new BodyVisualizerComponent { Appearance = appearance?.Clone() })
         };
     }
 

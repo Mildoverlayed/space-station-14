@@ -3,7 +3,7 @@
 
 using Content.Shared._Starlight.Body.Prototypes;
 using Content.Shared._Starlight.Body.Systems;
-using Content.Shared.Starlight.Utility;
+using Content.Shared._Starlight.Utility;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 

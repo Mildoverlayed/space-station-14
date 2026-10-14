@@ -3,7 +3,6 @@
 
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
-using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Set;
 
 namespace Content.Shared._Starlight.Body.Prototypes;
 [Prototype]

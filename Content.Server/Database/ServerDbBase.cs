@@ -107,8 +107,8 @@ namespace Content.Server.Database
 
         public async Task SaveCharacterSlotAsync(NetUserId userId, HumanoidCharacterProfile? humanoid, int slot)
         {
-            var bodyEditorSerialized = profile is HumanoidCharacterProfile h
-                ? BodyProfileSerializer.Serialize(h.BodyEditorProfile, _opsLog)
+            var bodyEditorSerialized = humanoid is not null
+                ? BodyProfileSerializer.Serialize(humanoid.BodyEditorProfile, _opsLog)
                 : null; // Starlight
 
             await using var db = await GetDb();
@@ -197,9 +197,7 @@ namespace Content.Server.Database
         public async Task<PlayerPreferences> InitPrefsAsync(NetUserId userId, HumanoidCharacterProfile defaultProfile)
         {
             // Starlight start
-            var bodyEditorSerialized = defaultProfile is HumanoidCharacterProfile h
-                ? BodyProfileSerializer.Serialize(h.BodyEditorProfile, _opsLog)
-                : null;
+            var bodyEditorSerialized = BodyProfileSerializer.Serialize(defaultProfile.BodyEditorProfile, _opsLog);
             // Starlight end
             await using var db = await GetDb();
 

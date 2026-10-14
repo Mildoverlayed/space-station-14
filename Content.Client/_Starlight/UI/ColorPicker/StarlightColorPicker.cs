@@ -234,8 +234,7 @@ public sealed class StarlightColorPicker : BoxContainer
         if (_suppressHexEvent)
             return;
 
-        var parsed = Color.TryFromHex(_hexEdit.Text);
-        if (parsed is not { } color)
+        if (!Color.TryFromHex(_hexEdit.Text, out var color))
         {
             UpdateHexText();
             return;

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Starlight Network
 // SPDX-License-Identifier: MIT
 
-using Content.Server.Administration.Systems;
+using Content.Shared._Starlight;
 using Content.Shared._Starlight.Abstract;
 using Content.Shared._Starlight.Body.Components;
 using Content.Shared._Starlight.Body.Prototypes;

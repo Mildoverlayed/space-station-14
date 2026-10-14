@@ -389,6 +389,7 @@ namespace Content.Client._Starlight.Lobby.UI
             UpdateSpeciesGuidebookIcon();
             InitializeVoiceSelectors();
             SetupTabs();
+            InitializeBodyTab();
             _recordsTab = CreateRecordEditorTab();
             SetupInfoEditors();
             RefreshCharacterInfo();
@@ -456,6 +457,7 @@ namespace Content.Client._Starlight.Lobby.UI
             RefreshSpecies();
             _recordsTab.Update(Profile);
             RefreshCharacterInfo();
+            BodyTab.SetProfile(Profile);
             ReloadPreview();
         }
 

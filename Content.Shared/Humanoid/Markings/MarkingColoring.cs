@@ -62,8 +62,9 @@ public static class MarkingColoring
             var coloredSlots = new bool[colorSlotCount];
 
             // If some layers are specified.
-            foreach (var bodySprite in prototype.Sprites.Values) // Starlight
+            for (var i = 0; i < prototype.SpriteList.Count; i++) // Starlight
             {
+                var bodySprite = prototype.SpriteList[i]; // Starlight
                 // Starlight start - multiple sprite layers can share one color slot.
                 var colorIndex = prototype.GetColorIndex(i);
                 if (colorIndex >= colorSlotCount || coloredSlots[colorIndex])

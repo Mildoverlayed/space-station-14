@@ -1,10 +1,10 @@
-// SPDX-FileCopyrightText: 2026 Starlight Network
+﻿// SPDX-FileCopyrightText: 2026 Starlight Network
 // SPDX-License-Identifier: MIT
 
 using System.Numerics;
 using Content.Shared._Starlight.Body.Components;
 using Content.Shared._Starlight.Body.Prototypes;
-using Content.Shared.Starlight.Utility;
+using Content.Shared._Starlight.Utility;
 
 namespace Content.Shared._Starlight.Body.Systems;
 
