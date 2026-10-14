@@ -91,6 +91,8 @@ public sealed partial class SLBodySystem : EntitySystem
         body.Comp.BodyBuilt = true;
         body.Comp.BodyPartsDirty = true;
         Dirty(body);
+        foreach (var part in GetBodyParts(body))
+            RaiseEnteredBody(body, part);
         RaiseLocalEvent(body, new BodyInitEvent());
         return true;
     }
@@ -113,23 +115,9 @@ public sealed partial class SLBodySystem : EntitySystem
         var children = EnsureChildren(newPart); //Create the root BodyPart container and ensure that sockets are properly setup!
         newPart.Comp.Body = body;
         if (partDef.AttachedParts != null)
-            foreach (var (socketId, def) in partDef.AttachedParts)
-            {
-                var newChild = EntityManager.SpawnAttachedTo(def.BodyPart, new EntityCoordinates(newPart, 0, 0));
-                var childPart = new Entity<SLBodyPartComponent>(newChild, Comp<SLBodyPartComponent>(newChild));
-                childPart.Comp.ParentSocket = new BodyPartSocket(socketId, newPart.Comp.Sockets[socketId]);
-                childPart.Comp.Parent = newPart;
-                RecursivelyBuildBodyParts(body, children, childPart, def, address.Append(socketId));
-            }
-
+            BuildChildParts(body, children, newPart, partDef.AttachedParts, address, internalSockets: false);
         if (partDef.ContainedParts != null)
-            foreach (var def in partDef.ContainedParts)
-            {
-                var newChild = EntityManager.SpawnAttachedTo(def.BodyPart, new EntityCoordinates(newPart, 0, 0));
-                var childPart = new Entity<SLBodyPartComponent>(newChild, Comp<SLBodyPartComponent>(newChild));
-                childPart.Comp.Parent = newPart;
-                RecursivelyBuildBodyParts(body, children, childPart, def, address);
-            }
+            BuildChildParts(body, children, newPart, partDef.ContainedParts, address, internalSockets: true);
         BodyPartVisualizer.BakeAppearance(body, newPart, address);
         Dirty(newPart);
         if (parentContainer != null)
@@ -142,6 +130,37 @@ public sealed partial class SLBodySystem : EntitySystem
             // Root part is never inserted into a container, raise the event manually
             var ev = new SLBodyPartAddedEvent(newPart);
             RaiseLocalEvent(newPart, ref ev);
+        }
+    }
+
+    private void BuildChildParts(Entity<SLBodyComponent> body,
+        BodyPartContainer children,
+        Entity<SLBodyPartComponent> parent,
+        Dictionary<string, BodyPartDef> defs,
+        BodyPartAddress address,
+        bool internalSockets)
+    {
+        foreach (var (socketId, def) in defs)
+        {
+            if (!parent.Comp.Sockets.TryGetValue(socketId, out var socketType))
+            {
+                Log.Error($"Body {ToPrettyString(body)}: part {ToPrettyString(parent)} has no socket '{socketId}' for {def.BodyPart}");
+                continue;
+            }
+
+            if (Proto.Index(socketType).Internal != internalSockets)
+            {
+                Log.Error($"Body {ToPrettyString(body)}: socket '{socketId}' on {ToPrettyString(parent)} is " +
+                          $"{(internalSockets ? "external" : "internal")}, list {def.BodyPart} under " +
+                          $"{(internalSockets ? "attachedParts" : "containedParts")}");
+                continue;
+            }
+
+            var newChild = EntityManager.SpawnAttachedTo(def.BodyPart, new EntityCoordinates(parent, 0, 0));
+            var childPart = new Entity<SLBodyPartComponent>(newChild, Comp<SLBodyPartComponent>(newChild));
+            childPart.Comp.ParentSocket = new BodyPartSocket(socketId, socketType);
+            childPart.Comp.Parent = parent;
+            RecursivelyBuildBodyParts(body, children, childPart, def, address.Append(socketId));
         }
     }
 

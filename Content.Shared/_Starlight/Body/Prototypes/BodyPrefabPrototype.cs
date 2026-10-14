@@ -13,11 +13,13 @@ public sealed partial class BodyPrefabPrototype  : IPrototype
     [DataField(required: true)] public BodyPartDef Root = default!;
 }
 
+/// <param name="AttachedParts">Parts attached to this part's external sockets, keyed by socket id.</param>
+/// <param name="ContainedParts">Parts held in this part's internal sockets (organs, implants), keyed by socket id.</param>
 [DataRecord]
 public partial record struct BodyPartDef(
     EntProtoId<SLBodyPartComponent> BodyPart,
     Dictionary<string, BodyPartDef>? AttachedParts = null,
-    List<BodyPartDef>? ContainedParts = null,
+    Dictionary<string, BodyPartDef>? ContainedParts = null,
     List<EntProtoId<SLBodyPartComponent>>? Alternatives = null)
 {
     public bool HasSocketedChildren => AttachedParts is { Count: > 0 };

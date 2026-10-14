@@ -1,0 +1,73 @@
+// SPDX-FileCopyrightText: 2026 Starlight Network
+// SPDX-License-Identifier: MIT
+
+#nullable enable
+using System.Linq;
+using Content.IntegrationTests.Fixtures;
+using Content.Shared._Starlight.Body.Components;
+using Content.Shared._Starlight.Body.Systems;
+using Content.Shared.Hands.Components;
+using Content.Shared.Movement.Components;
+using Robust.Shared.GameObjects;
+using Robust.Shared.Map;
+
+namespace Content.IntegrationTests._Starlight.Body;
+
+[TestFixture]
+[TestOf(typeof(SLBodySystem))]
+public sealed class BodyAttachmentTest : GameTest
+{
+    private const string TestBody = "SLBodyTest";
+
+    [Test]
+    public async Task BuildDetachAttach()
+    {
+        var server = Pair.Server;
+        var entMan = server.ResolveDependency<IEntityManager>();
+        var bodySys = entMan.System<SLBodySystem>();
+        var map = await Pair.CreateTestMap();
+
+        await server.WaitAssertion(() =>
+        {
+            var uid = entMan.SpawnEntity(TestBody, map.MapCoords);
+            var body = new Entity<SLBodyComponent>(uid, entMan.GetComponent<SLBodyComponent>(uid));
+            var hands = entMan.GetComponent<HandsComponent>(uid);
+            var movement = entMan.GetComponent<MovementSpeedModifierComponent>(uid);
+
+            // Torso, head, eyes, 2 arms, 2 hands, 2 legs, 2 feet.
+            Assert.That(bodySys.GetBodyParts(body), Has.Count.EqualTo(11));
+            Assert.That(hands.Count, Is.EqualTo(2));
+            var fullSpeed = movement.BaseWalkSpeed;
+            Assert.That(fullSpeed, Is.GreaterThan(0f));
+
+            var root = bodySys.GetBodyParts(body)[0];
+            Assert.That(root.Owner, Is.EqualTo(body.Comp.RootPartEntity));
+            Assert.That(bodySys.TryGetPartInSocket(root, "LeftArm", out var leftArm));
+            Assert.That(bodySys.GetPartSide(bodySys.GetChildParts(leftArm).Single()), Is.EqualTo(BodySide.Left));
+            Assert.That(bodySys.GetPartAddress(bodySys.GetChildParts(leftArm).Single()).Path, Is.EqualTo("/LeftArm/Hand"));
+
+            // Detaching the arm takes its hand along.
+            Assert.That(bodySys.TryDetachPart(leftArm));
+            Assert.That(bodySys.GetBodyParts(body), Has.Count.EqualTo(9));
+            Assert.That(hands.Count, Is.EqualTo(1));
+            Assert.That(leftArm.Comp.Body, Is.EqualTo(EntityUid.Invalid));
+            Assert.That(bodySys.GetSubtree(leftArm), Has.Count.EqualTo(2), "the hand stays attached to the severed arm");
+            Assert.That(bodySys.TryDetachPart(root), Is.False, "the root part cannot be detached");
+
+            // The socket is free again and accepts the arm back.
+            Assert.That(bodySys.TryAttachPart(root, "LeftArm", leftArm));
+            Assert.That(bodySys.GetBodyParts(body), Has.Count.EqualTo(11));
+            Assert.That(hands.Count, Is.EqualTo(2));
+            Assert.That(leftArm.Comp.Body, Is.EqualTo(uid));
+            Assert.That(bodySys.TryAttachPart(root, "LeftArm", leftArm), Is.False, "a part cannot be attached twice");
+
+            // Losing a leg slows the body down (half the legs, and the remaining leg is overloaded).
+            Assert.That(bodySys.TryGetPartInSocket(root, "LeftLeg", out var leftLeg));
+            Assert.That(bodySys.TryDetachPart(leftLeg));
+            Assert.That(movement.BaseWalkSpeed, Is.LessThan(fullSpeed / 2 + 0.01f));
+
+            entMan.DeleteEntity(uid);
+            entMan.DeleteEntity(leftLeg);
+        });
+    }
+}

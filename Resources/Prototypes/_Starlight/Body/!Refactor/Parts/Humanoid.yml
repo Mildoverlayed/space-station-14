@@ -5,7 +5,7 @@
   abstract: true
   components:
   - type: SLBodyPart
-    partType: SLHumanoidGeneric
+    partType: HumanoidGeneric
 
 - type: entity
   id: SLPartHumanoidTorso
@@ -14,7 +14,7 @@
   name: "humanoid torso"
   components:
   - type: SLBodyPart
-    partType: SLHumanoidTorso
+    partType: HumanoidTorso
     sockets:
      Head: HumanoidHeadSocket
      LeftArm: HumanoidArmSocket
@@ -32,7 +32,7 @@
   name: "humanoid head"
   components:
   - type: SLBodyPart
-    partType: SLHumanoidHead
+    partType: HumanoidHead
     sockets:
       Eyes: HumanoidEyeSocket
       # TODO: split into LeftEye/RightEye once per-eye layers are ready
@@ -46,7 +46,7 @@
   name: "humanoid arm"
   components:
   - type: SLBodyPart
-    partType: SLHumanoidArm
+    partType: HumanoidArm
     sockets:
      Hand: HumanoidHandSocket
 
@@ -57,7 +57,8 @@
   name: "humanoid hand"
   components:
   - type: SLBodyPart
-    partType: SLHumanoidHand
+    partType: HumanoidHand
+  - type: BodyPartHand
 
 - type: entity
   id: SLPartHumanoidLeg
@@ -66,9 +67,10 @@
   name: "humanoid leg"
   components:
   - type: SLBodyPart
-    partType: SLHumanoidLeg
+    partType: HumanoidLeg
     sockets:
      Foot: HumanoidFootSocket
+  - type: MovementBodyPart
 
 - type: entity
   id: SLPartHumanoidFoot
@@ -77,4 +79,4 @@
   name: "humanoid foot"
   components:
   - type: SLBodyPart
-    partType: SLHumanoidFoot
+    partType: HumanoidFoot

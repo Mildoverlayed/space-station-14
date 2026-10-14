@@ -17,6 +17,12 @@ public sealed partial class SLBodyComponent : Component
     [DataField, AutoNetworkedField] public EntityUid RootPartEntity = default;
 
     /// <summary>
+    /// Number of legs the body needs to move at full speed; movement speed is the sum of attached legs'
+    /// <c>MovementBodyPart</c> speeds divided by this. 0 disables leg-based movement.
+    /// </summary>
+    [DataField, AutoNetworkedField] public int RequiredLegs;
+
+    /// <summary>
     /// Cached flat list of all body parts, rebuilt from the part tree when <see cref="BodyPartsDirty"/> is set.
     /// Read it through <see cref="Systems.SLBodySystem.GetBodyParts"/>, never directly.
     /// </summary>
