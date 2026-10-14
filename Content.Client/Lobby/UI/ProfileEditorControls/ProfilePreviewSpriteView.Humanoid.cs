@@ -1,3 +1,4 @@
+using Content.Shared._Starlight.Body.Components; // Starlight
 using System.Linq;
 using Content.Client.Station;
 using Content.Shared.Clothing;
@@ -9,7 +10,6 @@ using Content.Shared.Preferences.Loadouts;
 using Content.Shared.Roles;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
-using Content.Shared.Body.Part;
 #region Starlight
 using Content.Shared._Starlight.Medical.Limbs;
 using Content.Client._Starlight.Humanoid;
@@ -375,7 +375,7 @@ public sealed partial class ProfilePreviewSpriteView
     private Dictionary<HumanoidVisualLayers, CustomBaseLayerInfo> GetCyberneticsLayers(HumanoidCharacterProfile humanoid) => humanoid.Cybernetics.Select(p =>
     {
         var _cyberneticEnt = _prototypeManager.Index<EntityPrototype>(p);
-        if (_cyberneticEnt.TryGetComponent<BodyPartComponent>(out var part, EntMan.ComponentFactory) &&
+        if (_cyberneticEnt.TryGetComponent<SLBodyPartComponent>(out var part, EntMan.ComponentFactory) &&
            _cyberneticEnt.TryGetComponent<BaseLayerIdComponent>(out var layer, EntMan.ComponentFactory))
         {
             return (CyberneticImplant.LayerFromBodypart(part), new(

@@ -18,6 +18,7 @@ using Robust.Shared.Audio.Systems;
 using Robust.Shared.Physics.Events;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
+using Content.Shared._Starlight.Body.Components; // Starlight
 
 namespace Content.Server.Anomaly.Effects;
 
@@ -148,7 +149,7 @@ public sealed partial class InnerBodyAnomalySystem : SharedInnerBodyAnomalySyste
     private void OnAnomalySupercritical(Entity<InnerBodyAnomalyComponent> ent, ref AnomalySupercriticalEvent args)
     {
         // Starlight Start
-        if (!TryComp<BodyComponent>(ent, out var body))
+        if (!HasComp<SLBodyComponent>(ent))
             return;
         // Starlight End
 

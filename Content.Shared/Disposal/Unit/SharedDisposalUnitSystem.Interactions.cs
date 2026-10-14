@@ -14,6 +14,7 @@ using Content.Shared.Verbs;
 using Robust.Shared.Containers;
 using Robust.Shared.Utility;
 using System.Linq;
+using Content.Shared._Starlight.Body.Components; // Starlight
 
 namespace Content.Shared.Disposal.Unit;
 
@@ -268,7 +269,7 @@ public abstract partial class SharedDisposalUnitSystem
         }
 
         // Check if we can insert the entity instantly
-        if (delay <= 0 || user == null || !HasComp<BodyComponent>(toInsert))
+        if (delay <= 0 || user == null || !HasComp<SLBodyComponent>(toInsert))
         {
             Insert(ent, toInsert, user);
             return true;

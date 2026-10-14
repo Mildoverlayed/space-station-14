@@ -10,6 +10,7 @@ using Content.Shared.Body.Components;
 using Content.Shared.Body.Systems;
 using Content.Shared.Hands.Components;
 using Content.Shared.Movement.Components;
+using Robust.Shared.Containers;
 using Robust.Shared.GameObjects;
 using Robust.Shared.Map;
 
@@ -36,29 +37,33 @@ public sealed class BodyAttachmentTest : GameTest
             var hands = entMan.GetComponent<HandsComponent>(uid);
             var movement = entMan.GetComponent<MovementSpeedModifierComponent>(uid);
 
-            // Torso, head, eyes, 2 arms, 2 hands, 2 legs, 2 feet + 8 organs.
-            Assert.That(bodySys.GetBodyParts(body), Has.Count.EqualTo(19));
+            // Torso, head, 2 arms, 2 hands, 2 legs, 2 feet + 8 organs (the eyes organ is an external part).
+            Assert.That(bodySys.GetBodyParts(body), Has.Count.EqualTo(18));
             Assert.That(hands.Count, Is.EqualTo(2));
             var fullSpeed = movement.BaseWalkSpeed;
             Assert.That(fullSpeed, Is.GreaterThan(0f));
 
             var root = bodySys.GetBodyParts(body)[0];
             Assert.That(root.Owner, Is.EqualTo(body.Comp.RootPartEntity));
+            // The root part is hidden inside the body, not a loose entity next to it.
+            Assert.That(entMan.System<SharedContainerSystem>().TryGetContainingContainer((root.Owner, null, null), out var rootContainer));
+            Assert.That(rootContainer!.ID, Is.EqualTo(SLBodySystem.RootContainerId));
+            Assert.That(rootContainer.Owner, Is.EqualTo(uid));
             Assert.That(bodySys.TryGetPartInSocket(root, "LeftArm", out var leftArm));
             Assert.That(bodySys.GetPartSide(bodySys.GetChildParts(leftArm).Single()), Is.EqualTo(BodySide.Left));
             Assert.That(bodySys.GetPartAddress(bodySys.GetChildParts(leftArm).Single()).Path, Is.EqualTo("/LeftArm/Hand"));
 
             // Detaching the arm takes its hand along.
             Assert.That(bodySys.TryDetachPart(leftArm));
-            Assert.That(bodySys.GetBodyParts(body), Has.Count.EqualTo(17));
+            Assert.That(bodySys.GetBodyParts(body), Has.Count.EqualTo(16));
             Assert.That(hands.Count, Is.EqualTo(1));
-            Assert.That(leftArm.Comp.Body, Is.EqualTo(EntityUid.Invalid));
+            Assert.That(leftArm.Comp.Body, Is.Null);
             Assert.That(bodySys.GetSubtree(leftArm), Has.Count.EqualTo(2), "the hand stays attached to the severed arm");
             Assert.That(bodySys.TryDetachPart(root), Is.False, "the root part cannot be detached");
 
             // The socket is free again and accepts the arm back.
             Assert.That(bodySys.TryAttachPart(root, "LeftArm", leftArm));
-            Assert.That(bodySys.GetBodyParts(body), Has.Count.EqualTo(19));
+            Assert.That(bodySys.GetBodyParts(body), Has.Count.EqualTo(18));
             Assert.That(hands.Count, Is.EqualTo(2));
             Assert.That(leftArm.Comp.Body, Is.EqualTo(uid));
             Assert.That(bodySys.TryAttachPart(root, "LeftArm", leftArm), Is.False, "a part cannot be attached twice");

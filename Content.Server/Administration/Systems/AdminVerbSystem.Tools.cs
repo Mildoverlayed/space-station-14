@@ -39,7 +39,6 @@ using Robust.Shared.Utility;
 #region Starlight
 using Content.Server._Starlight.Medical.Limbs;
 using Content.Shared.Body.Components;
-using Content.Shared.Body.Part;
 using Content.Shared._Blimpuf.Contraband; // Blimpuf
 using Content.Shared.Electrocution;
 using Content.Shared.Humanoid;
@@ -47,6 +46,7 @@ using Content.Shared.Overlays;
 using Content.Shared._Starlight.Medical.Body.Part;
 using Content.Shared._Starlight;
 using Content.Shared._Starlight.Thaven;
+using Content.Shared._Starlight.Body.Components; // Starlight
 #endregion Starlight
 
 namespace Content.Server.Administration.Systems;
@@ -821,7 +821,7 @@ public sealed partial class AdminVerbSystem
         };
         args.Verbs.Add(toggleOverlays);
 
-        if (TryComp<BodyComponent>(args.Target, out var bodyComp))
+        if (HasComp<SLBodyComponent>(args.Target)) // Starlight: SLBody
         {
             // Reaper arm verb
             Verb reaperArm = new()
@@ -836,12 +836,12 @@ public sealed partial class AdminVerbSystem
                     if (torso == default || rightArm == default)
                         return;
 
-                    if (_entitySystem.TryEntity<TransformComponent, HumanoidAppearanceComponent, BodyComponent>(args.Target, out var body)
-                        && _entitySystem.TryEntity<TransformComponent, MetaDataComponent, BodyPartComponent>(rightArm.Id, out var partEnt))
+                    if (_entitySystem.TryEntity<TransformComponent, HumanoidAppearanceComponent, SLBodyComponent>(args.Target, out var body)
+                        && _entitySystem.TryEntity<TransformComponent, MetaDataComponent, SLBodyPartComponent>(rightArm.Id, out var partEnt))
                     {
                         _limbSystem.Amputatate(body, partEnt);
                         var reaper = Spawn("RightArmCyberReaper", body.Comp1.Coordinates);
-                        if (_entitySystem.TryEntity<BodyPartComponent>(reaper, out var reaperEnt))
+                        if (_entitySystem.TryEntity<SLBodyPartComponent>(reaper, out var reaperEnt))
                             _limbSystem.AttachLimb((body.Owner, body.Comp2), "right arm", torso, reaperEnt);
                     }
                 },
@@ -864,12 +864,12 @@ public sealed partial class AdminVerbSystem
                     if (torso == default || leftArm == default)
                         return;
 
-                    if (_entitySystem.TryEntity<TransformComponent, HumanoidAppearanceComponent, BodyComponent>(args.Target, out var body)
-                        && _entitySystem.TryEntity<TransformComponent, MetaDataComponent, BodyPartComponent>(leftArm.Id, out var partEnt))
+                    if (_entitySystem.TryEntity<TransformComponent, HumanoidAppearanceComponent, SLBodyComponent>(args.Target, out var body)
+                        && _entitySystem.TryEntity<TransformComponent, MetaDataComponent, SLBodyPartComponent>(leftArm.Id, out var partEnt))
                     {
                         _limbSystem.Amputatate(body, partEnt);
                         var reaper = Spawn("LeftArmCyberEngineer", body.Comp1.Coordinates);
-                        if (_entitySystem.TryEntity<BodyPartComponent>(reaper, out var engineerEnt))
+                        if (_entitySystem.TryEntity<SLBodyPartComponent>(reaper, out var engineerEnt))
                             _limbSystem.AttachLimb((body.Owner, body.Comp2), "left arm", torso, engineerEnt);
                     }
                 },
@@ -892,12 +892,12 @@ public sealed partial class AdminVerbSystem
                     if (torso == default || leftLeg == default)
                         return;
 
-                    if (_entitySystem.TryEntity<TransformComponent, HumanoidAppearanceComponent, BodyComponent>(args.Target, out var body)
-                        && _entitySystem.TryEntity<TransformComponent, MetaDataComponent, BodyPartComponent>(leftLeg.Id, out var partEnt))
+                    if (_entitySystem.TryEntity<TransformComponent, HumanoidAppearanceComponent, SLBodyComponent>(args.Target, out var body)
+                        && _entitySystem.TryEntity<TransformComponent, MetaDataComponent, SLBodyPartComponent>(leftLeg.Id, out var partEnt))
                     {
                         _limbSystem.Amputatate(body, partEnt);
                         var reaper = Spawn("LeftLegCyberSpeed", body.Comp1.Coordinates);
-                        if (_entitySystem.TryEntity<BodyPartComponent>(reaper, out var reaperEnt))
+                        if (_entitySystem.TryEntity<SLBodyPartComponent>(reaper, out var reaperEnt))
                             _limbSystem.AttachLimb((body.Owner, body.Comp2), "left leg", torso, reaperEnt);
                     }
                 },
@@ -920,12 +920,12 @@ public sealed partial class AdminVerbSystem
                     if (torso == default || rightLeg == default)
                         return;
 
-                    if (_entitySystem.TryEntity<TransformComponent, HumanoidAppearanceComponent, BodyComponent>(args.Target, out var body)
-                        && _entitySystem.TryEntity<TransformComponent, MetaDataComponent, BodyPartComponent>(rightLeg.Id, out var partEnt))
+                    if (_entitySystem.TryEntity<TransformComponent, HumanoidAppearanceComponent, SLBodyComponent>(args.Target, out var body)
+                        && _entitySystem.TryEntity<TransformComponent, MetaDataComponent, SLBodyPartComponent>(rightLeg.Id, out var partEnt))
                     {
                         _limbSystem.Amputatate(body, partEnt);
                         var reaper = Spawn("RightLegCyberSpeed", body.Comp1.Coordinates);
-                        if (_entitySystem.TryEntity<BodyPartComponent>(reaper, out var reaperEnt))
+                        if (_entitySystem.TryEntity<SLBodyPartComponent>(reaper, out var reaperEnt))
                             _limbSystem.AttachLimb((body.Owner, body.Comp2), "right leg", torso, reaperEnt);
                     }
                 },

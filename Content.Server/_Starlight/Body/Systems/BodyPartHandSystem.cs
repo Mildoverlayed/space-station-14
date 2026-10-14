@@ -15,8 +15,8 @@ namespace Content.Server._Starlight.Body.Systems;
 /// </summary>
 public sealed class BodyPartHandSystem : EntitySystem
 {
-    [Dependency] private readonly HandsSystem _hands = default!;
-    [Dependency] private readonly SLBodySystem _body = default!;
+    [Dependency] private HandsSystem _hands = default!;
+    [Dependency] private SLBodySystem _body = default!;
 
     public override void Initialize()
     {

@@ -17,9 +17,9 @@ namespace Content.Shared._Starlight.Body.Systems;
 /// </summary>
 public sealed class BodyPartMovementSystem : EntitySystem
 {
-    [Dependency] private readonly SLBodySystem _body = default!;
-    [Dependency] private readonly MovementSpeedModifierSystem _movement = default!;
-    [Dependency] private readonly StandingStateSystem _standing = default!;
+    [Dependency] private SLBodySystem _body = default!;
+    [Dependency] private MovementSpeedModifierSystem _movement = default!;
+    [Dependency] private StandingStateSystem _standing = default!;
 
     /// <summary>
     /// Density used when the body has no "fix1" fixture, matching the legacy body.

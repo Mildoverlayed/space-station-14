@@ -22,6 +22,7 @@ using Content.Shared.Body.Components;
 using Content.Shared.Body.Systems;
 using Robust.Shared.Utility;
 using Content.Shared._Starlight.Medical.Surgery.Components;
+using Content.Shared._Starlight.Body.Components; // Starlight
 
 namespace Content.Server.Cloning;
 
@@ -320,8 +321,8 @@ public sealed partial class CloningSystem : SharedCloningSystem
     /// <param name="target">Entity to copy cyberware data to.</param>
     private void CopyCyberwareStates(EntityUid original, EntityUid target)
     {
-        if(!TryComp(original, out BodyComponent? originalBody)
-        ||!TryComp(target, out BodyComponent? targetBody))
+        if(!HasComp<SLBodyComponent>(original) // Starlight: SLBody
+        ||!HasComp<SLBodyComponent>(target))
             return;
 
         if (!_prototype.Resolve((ProtoId<CloningSettingsPrototype>)"BaseClone", out var settings))

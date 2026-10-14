@@ -94,8 +94,8 @@
   - type: HTN
     rootTask:
       task: IdleCompound
-  - type: Body
-    prototype: Animal
+  - type: SLBody
+    prefab: Animal
   - type: Climbing
   - type: NameIdentifier
     group: GenericNumber

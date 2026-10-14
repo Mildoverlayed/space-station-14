@@ -7,6 +7,7 @@ using Robust.Shared.Player;
 using Robust.Shared.Utility;
 using Content.Shared.Body.Components;
 using Content.Server._Starlight.Medical.Body.Systems; // Starlight
+using Content.Shared._Starlight.Body.Components; // Starlight
 
 namespace Content.Server.Humanoid;
 
@@ -51,7 +52,7 @@ public sealed partial class HumanoidAppearanceSystem
     //Starlight Start
     private void OnVerbsRequest(EntityUid uid, HumanoidAppearanceComponent component, GetVerbsEvent<ActivationVerb> args)
     {
-        if (uid != args.Target || !TryComp(args.Target, out BodyComponent? _))
+        if (uid != args.Target || !HasComp<SLBodyComponent>(args.Target))
             return;
 
         foreach (var part in _body.GetBodyChildren(args.Target))

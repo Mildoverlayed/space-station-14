@@ -8,15 +8,20 @@ using Content.Shared._Starlight.Body.Prototypes;
 using Robust.Shared.Containers;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Reflection;
 namespace Content.Shared._Starlight.Body.Systems;
 
 public sealed partial class SLBodySystem : EntitySystem
 {
     public const string BodyContainerId = "sl_childbodyparts";
-    [Dependency] private readonly SharedContainerSystem ContainerSystem = default!;
-    [Dependency] private readonly IPrototypeManager Proto = default!;
-    [Dependency] private readonly BodyPartVisualizerSystem BodyPartVisualizer = default!;
+
+    /// <summary>
+    /// Container on the body entity that holds the root part, so it is hidden and moves with the body.
+    /// </summary>
+    public const string RootContainerId = "sl_rootbodypart";
+    [Dependency] private SharedContainerSystem ContainerSystem = default!;
+    [Dependency] private IPrototypeManager Proto = default!;
+    [Dependency] private BodyPartVisualizerSystem BodyPartVisualizer = default!;
+    [Dependency] private Robust.Shared.Timing.IGameTiming _timing = default!;
 
     public override void Initialize()
     {
@@ -25,6 +30,76 @@ public sealed partial class SLBodySystem : EntitySystem
         SubscribeLocalEvent<SLBodyPartComponent, AfterAutoHandleStateEvent>(OnPartHandleState);
         SubscribeLocalEvent<SLBodyPartComponent, SLBodyPartAddedEvent>(OnPartAdded);
         SubscribeLocalEvent<SLBodyPartComponent, SLBodyPartRemovedEvent>(OnPartRemoved);
+        SubscribeLocalEvent<SLBodyPartComponent, EntInsertedIntoContainerMessage>(OnChildInserted);
+        SubscribeLocalEvent<SLBodyPartComponent, EntRemovedFromContainerMessage>(OnChildRemoved);
+        InitializeGib();
+    }
+
+    // Child parts live in a plain Container (the client can only rebuild Container/ContainerSlot). Its messages drive
+    // body membership, so a part entering or leaving the container by any means (attach/detach, deletion, a
+    // transform change) updates Body and raises the entered/left events. On the client, state application only
+    // syncs the networked fields; the events come from the server's changes.
+    private void OnChildInserted(Entity<SLBodyPartComponent> parent, ref EntInsertedIntoContainerMessage args)
+    {
+        if (args.Container.ID != BodyContainerId || !TryComp<SLBodyPartComponent>(args.Entity, out var childComp))
+            return;
+        Entity<SLBodyPartComponent> child = (args.Entity, childComp);
+        var added = new SLBodyPartAddedEvent(child);
+        RaiseLocalEvent(child, ref added);
+
+        if (_timing.ApplyingState)
+            return;
+
+        child.Comp.Parent ??= parent;
+        // Built parts already carry the body; BuildBody raises their entered events once the tree is complete.
+        if (parent.Comp.Body is not { } bodyUid || child.Comp.Body == bodyUid
+            || !TryComp<SLBodyComponent>(bodyUid, out var bodyComp))
+            return;
+
+        Entity<SLBodyComponent> body = (bodyUid, bodyComp);
+        body.Comp.BodyPartsDirty = true;
+        foreach (var entered in GetSubtree(child))
+        {
+            entered.Comp.Body = body;
+            Dirty(entered);
+            RaiseEnteredBody(body, entered);
+        }
+    }
+
+    private void OnChildRemoved(Entity<SLBodyPartComponent> parent, ref EntRemovedFromContainerMessage args)
+    {
+        if (args.Container.ID != BodyContainerId || !TryComp<SLBodyPartComponent>(args.Entity, out var childComp))
+            return;
+        Entity<SLBodyPartComponent> child = (args.Entity, childComp);
+        var removed = new SLBodyPartRemovedEvent(child);
+        RaiseLocalEvent(child, ref removed);
+
+        if (_timing.ApplyingState)
+            return;
+
+        // Left-body handlers still see the old Parent/ParentSocket; they are cleared afterwards.
+        if (child.Comp.Body is { } bodyUid && TryComp<SLBodyComponent>(bodyUid, out var bodyComp))
+        {
+            Entity<SLBodyComponent> body = (bodyUid, bodyComp);
+            body.Comp.BodyPartsDirty = true;
+            if (!TerminatingOrDeleted(bodyUid))
+            {
+                var subtree = GetSubtree(child);
+                for (var i = subtree.Count - 1; i >= 0; i--)
+                {
+                    var left = subtree[i];
+                    left.Comp.Body = null;
+                    Dirty(left);
+                    var ev = new BodyPartLeftBodyEvent(body, left);
+                    RaiseLocalEvent(left, ref ev);
+                    RaiseLocalEvent(body, ref ev);
+                }
+            }
+        }
+
+        child.Comp.ParentSocket = null;
+        child.Comp.Parent = null;
+        Dirty(child);
     }
 
     /// <summary>
@@ -42,8 +117,8 @@ public sealed partial class SLBodySystem : EntitySystem
     {
         body.Comp.BodyParts.Clear();
         body.Comp.BodyPartsDirty = false;
-        if (TryComp<SLBodyPartComponent>(body.Comp.RootPartEntity, out var root))
-            CollectBodyParts(body, (body.Comp.RootPartEntity, root));
+        if (body.Comp.RootPartEntity is { } rootUid && TryComp<SLBodyPartComponent>(rootUid, out var root))
+            CollectBodyParts(body, (rootUid, root));
     }
 
     private void CollectBodyParts(Entity<SLBodyComponent> body, Entity<SLBodyPartComponent> part)
@@ -58,7 +133,7 @@ public sealed partial class SLBodySystem : EntitySystem
         }
     }
 
-    private void MarkBodyPartsDirty(EntityUid body)
+    private void MarkBodyPartsDirty(EntityUid? body)
     {
         if (TryComp<SLBodyComponent>(body, out var bodyComp))
             bodyComp.BodyPartsDirty = true;
@@ -99,21 +174,27 @@ public sealed partial class SLBodySystem : EntitySystem
 
     private Entity<SLBodyPartComponent> MakeBodyParts(Entity<SLBodyComponent> body, BodyPrefabPrototype prefab)
     {
-        body.Comp.RootPartEntity = EntityManager.SpawnAttachedTo(prefab.Root.BodyPart, new(body.Owner, body.Comp.RootOffset));
-        var bodyPart = new Entity<SLBodyPartComponent>(body.Comp.RootPartEntity,
-            Comp<SLBodyPartComponent>(body.Comp.RootPartEntity));
+        var rootUid = EntityManager.SpawnAttachedTo(prefab.Root.BodyPart, new(body.Owner, body.Comp.RootOffset));
+        ContainerSystem.Insert(rootUid, ContainerSystem.EnsureContainer<ContainerSlot>(body.Owner, RootContainerId), force: true);
+        body.Comp.RootPartEntity = rootUid;
+        var bodyPart = new Entity<SLBodyPartComponent>(rootUid, Comp<SLBodyPartComponent>(rootUid));
         RecursivelyBuildBodyParts(body, null, bodyPart, prefab.Root, BodyPartAddress.Root);
         Dirty(body);
         Dirty(bodyPart);
         return bodyPart;
     }
 
-    private void RecursivelyBuildBodyParts(Entity<SLBodyComponent> body, BodyPartContainer? parentContainer,Entity<SLBodyPartComponent> newPart,
+    private void RecursivelyBuildBodyParts(Entity<SLBodyComponent> body, Container? parentContainer, Entity<SLBodyPartComponent> newPart,
         BodyPartDef partDef,
         BodyPartAddress address)
     {
-        var children = EnsureChildren(newPart); //Create the root BodyPart container and ensure that sockets are properly setup!
+        var children = EnsureChildren(newPart);
         newPart.Comp.Body = body;
+        if (partDef.Sockets != null)
+        {
+            foreach (var (socketId, socketType) in partDef.Sockets)
+                AddSocket(newPart, socketId, socketType);
+        }
         if (partDef.AttachedParts != null)
             BuildChildParts(body, children, newPart, partDef.AttachedParts, address, internalSockets: false);
         if (partDef.ContainedParts != null)
@@ -127,14 +208,14 @@ public sealed partial class SLBodySystem : EntitySystem
         }
         else
         {
-            // Root part is never inserted into a container, raise the event manually
+            // The root part sits in the body's root container, not in a parent's children; raise the event manually
             var ev = new SLBodyPartAddedEvent(newPart);
             RaiseLocalEvent(newPart, ref ev);
         }
     }
 
     private void BuildChildParts(Entity<SLBodyComponent> body,
-        BodyPartContainer children,
+        Container children,
         Entity<SLBodyPartComponent> parent,
         Dictionary<string, BodyPartDef> defs,
         BodyPartAddress address,
@@ -144,8 +225,11 @@ public sealed partial class SLBodySystem : EntitySystem
         {
             if (!parent.Comp.Sockets.TryGetValue(socketId, out var socketType))
             {
-                Log.Error($"Body {ToPrettyString(body)}: part {ToPrettyString(parent)} has no socket '{socketId}' for {def.BodyPart}");
-                continue;
+                // The prefab defines the body's shape; sockets the part prototype does not declare are created.
+                socketType = internalSockets
+                    ? BodyPrefabPrototype.DefaultInternalSocket
+                    : BodyPrefabPrototype.DefaultExternalSocket;
+                AddSocket(parent, socketId, socketType);
             }
 
             if (Proto.Index(socketType).Internal != internalSockets)
@@ -164,26 +248,17 @@ public sealed partial class SLBodySystem : EntitySystem
         }
     }
 
-    private BodyPartContainer EnsureChildren(Entity<SLBodyPartComponent> bodyPart)
+    /// <summary>
+    /// Adds a socket to a part (or retypes an existing one).
+    /// </summary>
+    public void AddSocket(Entity<SLBodyPartComponent> part, string socketId, ProtoId<BodyPartSocketPrototype> socketType)
     {
-        if (bodyPart.Comp.Children != null)
-            return bodyPart.Comp.Children;
-        var exists = false;
-        bodyPart.Comp.Children ??= ContainerSystem.EnsureContainer<BodyPartContainer>(bodyPart.Owner, BodyContainerId, out exists);
-        if (!exists) //We created a new child container and need to populate its sockets
-            PopulateSockets(bodyPart);
-        return bodyPart.Comp.Children;
+        part.Comp.Sockets[socketId] = socketType;
+        Dirty(part);
     }
 
-    private void PopulateSockets(Entity<SLBodyPartComponent> bodyPart)
+    private Container EnsureChildren(Entity<SLBodyPartComponent> bodyPart)
     {
-        if (bodyPart.Comp.Children == null)
-            EnsureChildren(bodyPart);
-        var container = bodyPart.Comp.Children!;
-        foreach (var (id, socketTypeId) in bodyPart.Comp.Sockets)
-        {
-            var socketType = Proto.Index(socketTypeId);
-            container.TryRegisterSocket(new BodyPartSocket(id, socketType.ID));
-        }
+        return bodyPart.Comp.Children ??= ContainerSystem.EnsureContainer<Container>(bodyPart.Owner, BodyContainerId);
     }
 }

@@ -11,6 +11,7 @@ using Robust.Shared.Prototypes;
 
 using Content.Shared.NPC.Systems;
 using Content.Shared.NPC.Prototypes;
+using Content.Shared._Starlight.Body.Components; // Starlight
 
 namespace Content.Server.Anomaly.Effects;
 
@@ -73,7 +74,7 @@ public sealed partial class InnerBodyAnomalySystem : SharedInnerBodyAnomalySyste
 
     private void OnAnomalySupercritical(Entity<InnerBodyAnomalyComponent> ent, ref AnomalySupercriticalEvent args)
     {
-        if (!TryComp<BodyComponent>(ent, out var body))
+        if (!HasComp<SLBodyComponent>(ent))
             return;
 
         _gibbing.Gib(ent.Owner);

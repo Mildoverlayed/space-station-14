@@ -32,6 +32,9 @@ using System.Net;
 using Content.Shared.Actions;
 using Content.Shared.Bed.Sleep;
 using Content.Shared.Body.Components;
+using Content.Shared._Starlight.Body.Components; // Starlight
+using Content.Shared._Starlight.Body.Systems; // Starlight
+using Content.Shared._Starlight.Movement.Components; // Starlight
 using Content.Shared.Charges.Systems;
 using Robust.Shared.Physics.Systems;
 using Robust.Shared.Serialization.Manager.Exceptions;
@@ -49,6 +52,7 @@ public abstract partial class SharedMoverController : VirtualController
     [Dependency] protected IGameTiming Timing = default!;
     [Dependency] protected ITileDefinitionManager _tileDefinitionManager = default!;
     [Dependency] private   ActionBlockerSystem _blocker = default!;
+    [Dependency] private   SLBodySystem _slBody = default!; // Starlight
     [Dependency] protected EntityLookupSystem _lookup = default!;
     [Dependency] private   InventorySystem _inventory = default!;
     [Dependency] private   MobStateSystem _mobState = default!;
@@ -611,13 +615,13 @@ public abstract partial class SharedMoverController : VirtualController
         }
 
         // STARLIGHT: Check cyberlegs before outer clothing
-        if (TryComp<BodyComponent>(uid, out var body) && body != null && body.RequiredLegs >= 0)
+        if (TryComp<SLBodyComponent>(uid, out var body) && body.RequiredLegs >= 0)
         {
-            foreach (var legEntity in body.LegEntities)
+            foreach (var leg in _slBody.GetBodyPartsWithComp<FootstepModifierComponent>((uid, body)))
             {
-                if (!TryComp<FootstepModifierComponent>(legEntity, out var legFootstep))
+                if (!HasComp<MovementBodyPartComponent>(leg))
                     continue;
-                sound = legFootstep.FootstepSoundCollection;
+                sound = leg.Comp2.FootstepSoundCollection;
                 return sound != null;
             }
         }

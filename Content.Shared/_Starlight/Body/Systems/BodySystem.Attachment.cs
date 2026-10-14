@@ -24,7 +24,7 @@ public sealed partial class SLBodySystem
     /// </summary>
     public bool TryAttachPart(Entity<SLBodyPartComponent> parent, string socketId, Entity<SLBodyPartComponent> part)
     {
-        if (part.Comp.Parent.IsValid() || part.Comp.Body.IsValid() || part.Owner == parent.Owner)
+        if (part.Comp.Parent != null || part.Comp.Body != null || part.Owner == parent.Owner)
             return false;
 
         if (!CanAttach(parent, socketId, part, out var socket))
@@ -36,23 +36,12 @@ public sealed partial class SLBodySystem
         if (!ContainerSystem.Insert(part.Owner, children))
         {
             part.Comp.ParentSocket = null;
-            part.Comp.Parent = EntityUid.Invalid;
+            part.Comp.Parent = null;
             return false;
         }
 
+        // Body membership and the entered events follow from the container insertion (OnChildInserted).
         Dirty(part);
-        if (TryComp<SLBodyComponent>(parent.Comp.Body, out var bodyComp))
-        {
-            Entity<SLBodyComponent> body = (parent.Comp.Body, bodyComp);
-            body.Comp.BodyPartsDirty = true;
-            foreach (var entered in GetSubtree(part))
-            {
-                entered.Comp.Body = body;
-                Dirty(entered);
-                RaiseEnteredBody(body, entered);
-            }
-        }
-
         return true;
     }
 
@@ -83,35 +72,13 @@ public sealed partial class SLBodySystem
     /// <param name="destination">Where the detached part ends up; defaults to the parent's position.</param>
     public bool TryDetachPart(Entity<SLBodyPartComponent> part, EntityCoordinates? destination = null)
     {
-        if (!part.Comp.Parent.IsValid()
-            || !ContainerSystem.TryGetContainer(part.Comp.Parent, BodyContainerId, out var container)
+        if (part.Comp.Parent is not { } parentUid
+            || !ContainerSystem.TryGetContainer(parentUid, BodyContainerId, out var container)
             || !container.Contains(part))
             return false;
 
-        var subtree = GetSubtree(part);
-        if (!ContainerSystem.Remove(part.Owner, container, destination: destination))
-            return false;
-
-        // Left-body handlers still see the old Parent/ParentSocket; they are cleared afterwards.
-        if (TryComp<SLBodyComponent>(part.Comp.Body, out var bodyComp))
-        {
-            Entity<SLBodyComponent> body = (part.Comp.Body, bodyComp);
-            body.Comp.BodyPartsDirty = true;
-            for (var i = subtree.Count - 1; i >= 0; i--)
-            {
-                var left = subtree[i];
-                left.Comp.Body = EntityUid.Invalid;
-                Dirty(left);
-                var ev = new BodyPartLeftBodyEvent(body, left);
-                RaiseLocalEvent(left, ref ev);
-                RaiseLocalEvent(body, ref ev);
-            }
-        }
-
-        part.Comp.ParentSocket = null;
-        part.Comp.Parent = EntityUid.Invalid;
-        Dirty(part);
-        return true;
+        // Leaving the body and clearing Parent/ParentSocket follow from the container removal (OnChildRemoved).
+        return ContainerSystem.Remove(part.Owner, container, destination: destination);
     }
 
     private void RaiseEnteredBody(Entity<SLBodyComponent> body, Entity<SLBodyPartComponent> part)
@@ -209,9 +176,9 @@ public sealed partial class SLBodySystem
         while (current.Comp.ParentSocket is { } socket)
         {
             sockets.Add(socket.SocketId);
-            if (!TryComp<SLBodyPartComponent>(current.Comp.Parent, out var parentComp))
+            if (current.Comp.Parent is not { } parentUid || !TryComp<SLBodyPartComponent>(parentUid, out var parentComp))
                 break;
-            current = (current.Comp.Parent, parentComp);
+            current = (parentUid, parentComp);
         }
 
         var address = BodyPartAddress.Root;
@@ -222,11 +189,14 @@ public sealed partial class SLBodySystem
 
     /// <summary>
     /// Which side of the body the part is on, taken from the nearest socket on its path whose id starts with
-    /// "Left" or "Right" (e.g. the hand in <c>/LeftArm/Hand</c> is on the left). Part prototypes are side-agnostic;
-    /// the side is a property of where the part is attached.
+    /// "Left" or "Right" (e.g. the hand in <c>/LeftArm/Hand</c> is on the left), unless the part itself names its
+    /// <see cref="SLBodyPartComponent.Side"/>.
     /// </summary>
     public BodySide GetPartSide(Entity<SLBodyPartComponent> part)
     {
+        if (part.Comp.Side != BodySide.None)
+            return part.Comp.Side;
+
         var current = part;
         while (current.Comp.ParentSocket is { } socket)
         {
@@ -234,9 +204,9 @@ public sealed partial class SLBodySystem
                 return BodySide.Left;
             if (socket.SocketId.StartsWith("Right", StringComparison.Ordinal))
                 return BodySide.Right;
-            if (!TryComp<SLBodyPartComponent>(current.Comp.Parent, out var parentComp))
+            if (current.Comp.Parent is not { } parentUid || !TryComp<SLBodyPartComponent>(parentUid, out var parentComp))
                 break;
-            current = (current.Comp.Parent, parentComp);
+            current = (parentUid, parentComp);
         }
 
         return BodySide.None;

@@ -1,6 +1,7 @@
 using Robust.Client.Graphics;
 using Robust.Client.GameObjects;
 using Content.Shared.Body.Components;
+using Content.Shared._Starlight.Body.Components; // Starlight
 
 namespace Content.Client._Starlight.Overlay.Overlays;
 
@@ -24,7 +25,7 @@ public abstract partial class BaseEntityHighlightOverlay : BaseVisionOverlay
         var eyeRotation = args.Viewport.Eye?.Rotation ?? Angle.Zero;
 
         worldHandle.UseShader(_shader);
-        var query = _entityManager.EntityQueryEnumerator<BodyComponent, MetaDataComponent, SpriteComponent, TransformComponent>();
+        var query = _entityManager.EntityQueryEnumerator<SLBodyComponent, MetaDataComponent, SpriteComponent, TransformComponent>();
         while (query.MoveNext(out var uid, out _, out var meta, out var sprite, out var xform))
         {
             if (xform.MapID != args.MapId || _containerSystem.IsEntityInContainer(uid, meta)) continue;

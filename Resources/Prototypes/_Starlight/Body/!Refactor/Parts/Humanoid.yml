@@ -5,7 +5,7 @@
   abstract: true
   components:
   - type: SLBodyPart
-    partType: HumanoidGeneric
+    partType: Other
 
 - type: entity
   id: SLPartHumanoidTorso
@@ -14,7 +14,7 @@
   name: "humanoid torso"
   components:
   - type: SLBodyPart
-    partType: HumanoidTorso
+    partType: Torso
     sockets:
      Head: HumanoidHeadSocket
      LeftArm: HumanoidArmSocket
@@ -38,11 +38,10 @@
   name: "humanoid head"
   components:
   - type: SLBodyPart
-    partType: HumanoidHead
+    partType: Head
     sockets:
       Eyes: HumanoidEyeSocket
       Brain: OrganSocket
-      EyeOrgans: OrganSocket
       Tongue: OrganSocket
       EyeImplant: OrganSocket
       NoseImplant: OrganSocket
@@ -58,7 +57,7 @@
   name: "humanoid arm"
   components:
   - type: SLBodyPart
-    partType: HumanoidArm
+    partType: Arm
     sockets:
      Hand: HumanoidHandSocket
 
@@ -69,7 +68,7 @@
   name: "humanoid hand"
   components:
   - type: SLBodyPart
-    partType: HumanoidHand
+    partType: Hand
     sockets:
      HandImplant: OrganSocket
   - type: BodyPartHand
@@ -81,7 +80,7 @@
   name: "humanoid leg"
   components:
   - type: SLBodyPart
-    partType: HumanoidLeg
+    partType: Leg
     sockets:
      Foot: HumanoidFootSocket
   - type: MovementBodyPart
@@ -93,4 +92,4 @@
   name: "humanoid foot"
   components:
   - type: SLBodyPart
-    partType: HumanoidFoot
+    partType: Foot

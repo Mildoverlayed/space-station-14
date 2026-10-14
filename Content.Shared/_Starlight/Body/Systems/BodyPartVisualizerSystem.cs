@@ -13,8 +13,8 @@ namespace Content.Shared._Starlight.Body.Systems;
 
 public sealed class BodyPartVisualizerSystem : EntitySystem
 {
-    [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly MarkingManager _markings = default!;
+    [Dependency] private IPrototypeManager _proto = default!;
+    [Dependency] private MarkingManager _markings = default!;
 
     public void BakeAppearance(
         Entity<SLBodyComponent> body,

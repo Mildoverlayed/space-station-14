@@ -27,7 +27,6 @@ using Content.Server._Starlight.Statistics;
 using Robust.Shared.GameObjects.Components.Localization;
 using Content.Server._Starlight.Medical.Limbs;
 using Content.Shared.Body.Components;
-using Content.Shared.Body.Part;
 using Content.Server._Starlight.Administration.Systems;
 using Content.Server._Starlight.Medical.Body.Systems;
 using Content.Shared._Starlight.Body.Components;
@@ -305,11 +304,11 @@ public sealed partial class StationSpawningSystem : SharedStationSpawningSystem
     {
         if (!TryComp(entity, out TransformComponent? transform) ||
             !TryComp(entity, out HumanoidAppearanceComponent? appearance) ||
-            !TryComp(entity, out BodyComponent? bodyComp))
+            !TryComp(entity, out SLBodyComponent? bodyComp))
         {
             return;
         }
-        Entity<TransformComponent, HumanoidAppearanceComponent, BodyComponent> body = (entity, transform, appearance, bodyComp);
+        Entity<TransformComponent, HumanoidAppearanceComponent, SLBodyComponent> body = (entity, transform, appearance, bodyComp);
 
         var installedCyberlimbs = _allCybernetics.Where(p => cybernetics.Contains(p.ID) && p.Type == CyberneticImplantType.Limb).ToList();
         // We don't need to manually attach limbs that are already attached by other limbs
@@ -322,21 +321,21 @@ public sealed partial class StationSpawningSystem : SharedStationSpawningSystem
             var implantEnt = _prototypeManager.Index<EntityPrototype>(implant);
 
             var newPart = Spawn(implant, body.Comp1.Coordinates);
-            if (!TryComp(newPart, out BodyPartComponent? bodyPartComp))
+            if (!TryComp(newPart, out SLBodyPartComponent? bodyPartComp))
             {
                 Del(newPart);
                 continue;
             }
 
-            var oldPartId = _bodySystem.GetBodyChildrenOfType(entity, bodyPartComp.PartType).FirstOrDefault(p => p.Component.Symmetry == bodyPartComp.Symmetry);
+            var oldPartId = _bodySystem.GetBodyChildrenOfType(entity, bodyPartComp.Kind).FirstOrDefault(p => p.Component.Symmetry == bodyPartComp.Symmetry);
             if (!TryComp(oldPartId.Id, out TransformComponent? oldPartTransform) ||
                !TryComp(oldPartId.Id, out MetaDataComponent? oldPartMetadata) ||
-               !TryComp(oldPartId.Id, out BodyPartComponent? oldPartBodyPart))
+               !TryComp(oldPartId.Id, out SLBodyPartComponent? oldPartBodyPart))
             {
                 Del(newPart);
                 continue;
             }
-            Entity<TransformComponent, MetaDataComponent, BodyPartComponent> oldPart = (oldPartId.Id, oldPartTransform, oldPartMetadata, oldPartBodyPart);
+            Entity<TransformComponent, MetaDataComponent, SLBodyPartComponent> oldPart = (oldPartId.Id, oldPartTransform, oldPartMetadata, oldPartBodyPart);
 
             if (!_bodySystem.TryGetParentBodyPart(oldPart.Owner, out var parentUid, out var parentBodyPart))
             {

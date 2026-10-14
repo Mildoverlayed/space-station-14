@@ -21,6 +21,7 @@ using Robust.Shared.Prototypes;
 #region Starlight
 using Content.Shared._Starlight.Medical.Body.Components;
 using Content.Shared._Starlight.Medical.Body.Systems;
+using Content.Shared._Starlight.Body.Components; // Starlight
 #endregion
 
 namespace Content.Shared.Medical;
@@ -45,7 +46,7 @@ public sealed partial class VomitSystem : EntitySystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<BodyComponent, TryVomitEvent>(TryBodyVomitSolution); // Starlight Edit: StomachComponent -> BodyComponent, Removed BodyRelayedEvent, TryVomitSolution -> TryBodyVomitSolution
+        SubscribeLocalEvent<SLBodyComponent, TryVomitEvent>(TryBodyVomitSolution); // Starlight Edit: StomachComponent -> SLBodyComponent, Removed BodyRelayedEvent, TryVomitSolution -> TryBodyVomitSolution
     }
 
     private const float ChemMultiplier = 0.1f;
@@ -58,7 +59,7 @@ public sealed partial class VomitSystem : EntitySystem
         AudioParams.Default.WithVariation(0.2f).WithVolume(-4f));
 
     // Starlight edit Start: Reverted NuBody
-    private void TryBodyVomitSolution(Entity<BodyComponent> ent, ref TryVomitEvent args)
+    private void TryBodyVomitSolution(Entity<SLBodyComponent> ent, ref TryVomitEvent args) // Starlight: SLBody
     {
         // Starlight start
         if (args.Handled)

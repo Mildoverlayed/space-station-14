@@ -4,7 +4,8 @@ using Content.Shared.Movement.Systems;
 using Content.Shared.Standing;
 using Content.Shared.Throwing;
 #region Starlight
-using Content.Shared.Body.Systems;
+using Content.Shared._Starlight.Body.Components;
+using Content.Shared._Starlight.Body.Systems;
 #endregion
 
 namespace Content.Shared.Traits.Assorted;
@@ -13,7 +14,7 @@ public sealed partial class LegsParalyzedSystem : EntitySystem
 {
     [Dependency] private MovementSpeedModifierSystem _movementSpeedModifierSystem = default!;
     [Dependency] private StandingStateSystem _standingSystem = default!;
-    [Dependency] private SharedBodySystem _bodySystem = default!; // Starlight: Reverted NuBody
+    [Dependency] private BodyPartMovementSystem _bodyMovement = default!; // Starlight: SLBody
 
     public override void Initialize()
     {
@@ -34,7 +35,8 @@ public sealed partial class LegsParalyzedSystem : EntitySystem
     private void OnShutdown(EntityUid uid, LegsParalyzedComponent component, ComponentShutdown args)
     {
         _standingSystem.Stand(uid);
-        _bodySystem.UpdateMovementSpeed(uid); // Starlight: Reverted NuBody
+        if (TryComp<SLBodyComponent>(uid, out var body)) // Starlight: SLBody
+            _bodyMovement.UpdateMovementSpeed((uid, body));
     }
 
     private void OnBuckled(EntityUid uid, LegsParalyzedComponent component, ref BuckledEvent args)

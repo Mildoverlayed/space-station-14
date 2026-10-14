@@ -15,9 +15,9 @@ namespace Content.Client._Starlight.Body.Systems;
 
 public sealed class BodyVisualizerSystem : SharedBodyVisualizerSystem
 {
-    [Dependency] private readonly VisualLayerSystem _visualLayer = default!;
-    [Dependency] private readonly SpriteSystem _sprite = default!;
-    [Dependency] private readonly StarlightEntitySystem _sl = default!;
+    [Dependency] private VisualLayerSystem _visualLayer = default!;
+    [Dependency] private SpriteSystem _sprite = default!;
+    [Dependency] private StarlightEntitySystem _sl = default!;
 
     public override void Initialize()
     {
@@ -44,40 +44,6 @@ public sealed class BodyVisualizerSystem : SharedBodyVisualizerSystem
                 _visualLayer.ReorderSpriteLayers(uid, component);
                 break;
 
-            case BodyVisualizerDeltaState delta:
-                component.Offset = delta.Offset;
-
-                if (component.LayerData.Count != delta.AllLayers.Count
-                    || !AllPresent(component.LayerData, delta.AllLayers))
-                {
-                    List<VisualLayerKey>? toRemove = null;
-                    foreach (var key in component.LayerData.Keys)
-                    {
-                        if (!delta.AllLayers.Contains(key))
-                            (toRemove ??= []).Add(key);
-                    }
-
-                    if (toRemove != null)
-                    {
-                        foreach (var key in toRemove)
-                        {
-                            HideLayer(uid, component, key);
-                            component.LayerData.Remove(key);
-                            component.LayerKeys.Remove(key);
-                        }
-                    }
-                }
-
-                foreach (var (key, value) in delta.ModifiedLayers)
-                {
-                    component.LayerData[key] = value;
-                    component.LayerKeys.Add(key);
-                    ApplyLayerToSprite(uid, component, key, value);
-                }
-
-                if (delta.ModifiedLayers.Count > 0 || delta.AllLayers.Count != component.LayerData.Count)
-                    _visualLayer.ReorderSpriteLayers(uid, component);
-                break;
         }
     }
 
@@ -125,15 +91,4 @@ public sealed class BodyVisualizerSystem : SharedBodyVisualizerSystem
         layer.CopyToShaderParameters!.ParameterUV = "displacementUV";
     }
 
-    private static bool AllPresent(
-        Dictionary<VisualLayerKey, ExtendedSpriteSpecifier> dict,
-        HashSet<VisualLayerKey> set)
-    {
-        foreach (var key in dict.Keys)
-        {
-            if (!set.Contains(key))
-                return false;
-        }
-        return true;
-    }
 }

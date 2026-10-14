@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: MIT
 
 using Content.Shared._Starlight.Body.Prototypes;
+using Content.Shared._Starlight.Medical.Body.Part;
 using Content.Shared._Starlight.Body.Systems;
 using Content.Shared._Starlight.Utility;
+using Robust.Shared.Containers;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 
@@ -12,11 +14,31 @@ namespace Content.Shared._Starlight.Body.Components;
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState(true)]
 public sealed partial class SLBodyPartComponent : Component
 {
-    [DataField, AutoNetworkedField] public ProtoId<BodyPartTypePrototype> PartType = default;
+    [DataField, AutoNetworkedField] public ProtoId<BodyPartTypePrototype> PartType = "Other";
+
+    /// <summary>
+    /// The side of the body the part belongs to, for parts that are not attached to a <c>Left*</c>/<c>Right*</c>
+    /// socket yet (a severed arm still is a left arm).
+    /// </summary>
+    [DataField, AutoNetworkedField] public BodySide Side = BodySide.None;
+
+    /// <summary>
+    /// Coarse kind of the part for surgery and limb code, matched by <see cref="PartType"/> id.
+    /// </summary>
+    [ViewVariables]
+    public BodyPartType Kind => Enum.TryParse<BodyPartType>(PartType.Id, out var kind) ? kind : BodyPartType.Other;
+
+    [ViewVariables]
+    public BodyPartSymmetry Symmetry => Side switch
+    {
+        BodySide.Left => BodyPartSymmetry.Left,
+        BodySide.Right => BodyPartSymmetry.Right,
+        _ => BodyPartSymmetry.None,
+    };
     [DataField, AutoNetworkedField] public Dictionary<string, ProtoId<BodyPartSocketPrototype>> Sockets = new();
     [DataField, AutoNetworkedField] public BodyPartSocket? ParentSocket = null; //Must be set BEFORE adding to parent's container
-    [DataField, AutoNetworkedField] public EntityUid Parent = EntityUid.Invalid;
-    [DataField, AutoNetworkedField] public EntityUid Body = EntityUid.Invalid;
+    [DataField, AutoNetworkedField] public EntityUid? Parent;
+    [DataField, AutoNetworkedField] public EntityUid? Body;
     //Cached container reference for container holding all direct children
-    [NonSerialized] public BodyPartContainer? Children = null;
+    [NonSerialized] public Container? Children = null;
 }

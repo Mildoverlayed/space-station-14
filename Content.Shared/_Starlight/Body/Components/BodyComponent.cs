@@ -14,7 +14,7 @@ public sealed partial class SLBodyComponent : Component
     [DataField, AutoNetworkedField] public Vector2 RootOffset = Vector2.Zero;
     [DataField, AutoNetworkedField] public ProtoId<BodyPrefabPrototype>? Prefab = null;
     [DataField, AutoNetworkedField] public bool BodyBuilt = false;
-    [DataField, AutoNetworkedField] public EntityUid RootPartEntity = default;
+    [DataField, AutoNetworkedField] public EntityUid? RootPartEntity;
 
     /// <summary>
     /// Number of legs the body needs to move at full speed; movement speed is the sum of attached legs'

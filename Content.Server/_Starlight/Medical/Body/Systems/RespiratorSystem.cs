@@ -1,3 +1,4 @@
+using Content.Shared._Starlight.Body.Components;
 using Content.Server.Administration.Logs;
 using Content.Server.Atmos.EntitySystems;
 using Content.Server.Body.Components;
@@ -58,11 +59,11 @@ public sealed partial class RespiratorSystem : EntitySystem
         SubscribeLocalEvent<RespiratorComponent, ApplyMetabolicMultiplierEvent>(OnApplyMetabolicMultiplier);
 
         // BodyComp stuff
-        SubscribeLocalEvent<BodyComponent, InhaledGasEvent>(OnGasInhaled);
-        SubscribeLocalEvent<BodyComponent, ExhaledGasEvent>(OnGasExhaled);
-        SubscribeLocalEvent<BodyComponent, CanMetabolizeGasEvent>(CanBodyMetabolizeGas);
-        SubscribeLocalEvent<BodyComponent, SuffocationEvent>(OnSuffocation);
-        SubscribeLocalEvent<BodyComponent, StopSuffocatingEvent>(OnStopSuffocating);
+        SubscribeLocalEvent<SLBodyComponent, InhaledGasEvent>(OnGasInhaled);
+        SubscribeLocalEvent<SLBodyComponent, ExhaledGasEvent>(OnGasExhaled);
+        SubscribeLocalEvent<SLBodyComponent, CanMetabolizeGasEvent>(CanBodyMetabolizeGas);
+        SubscribeLocalEvent<SLBodyComponent, SuffocationEvent>(OnSuffocation);
+        SubscribeLocalEvent<SLBodyComponent, StopSuffocatingEvent>(OnStopSuffocating);
     }
 
     private void OnMapInit(Entity<RespiratorComponent> ent, ref MapInitEvent args)
@@ -243,7 +244,7 @@ public sealed partial class RespiratorSystem : EntitySystem
     /// <summary>
     /// Tries to safely metabolize the current solutions in a body's lungs.
     /// </summary>
-    private void CanBodyMetabolizeGas(Entity<BodyComponent> ent, ref CanMetabolizeGasEvent args)
+    private void CanBodyMetabolizeGas(Entity<SLBodyComponent> ent, ref CanMetabolizeGasEvent args)
     {
         if (args.Handled)
             return;
@@ -270,7 +271,7 @@ public sealed partial class RespiratorSystem : EntitySystem
         args.Saturation = saturation;
     }
 
-    public bool TryInhaleGasToBody(Entity<BodyComponent?> entity, GasMixture gas)
+    public bool TryInhaleGasToBody(Entity<SLBodyComponent?> entity, GasMixture gas)
     {
         if (!Resolve(entity, ref entity.Comp))
             return false;
@@ -291,7 +292,7 @@ public sealed partial class RespiratorSystem : EntitySystem
         return true;
     }
 
-    public void RemoveGasFromBody(Entity<BodyComponent> ent, GasMixture gas)
+    public void RemoveGasFromBody(Entity<SLBodyComponent> ent, GasMixture gas)
     {
         var outGas = new GasMixture(gas.Volume);
 
@@ -394,7 +395,7 @@ public sealed partial class RespiratorSystem : EntitySystem
         RaiseLocalEvent(ent, ref ev);
     }
 
-    private void OnSuffocation(Entity<BodyComponent> ent, ref SuffocationEvent args)
+    private void OnSuffocation(Entity<SLBodyComponent> ent, ref SuffocationEvent args)
     {
         // TODO: This is not going work with multiple different lungs, if that ever becomes a possibility
         var organs = _bodySystem.GetBodyOrganEntityComps<LungComponent>((ent, null));
@@ -404,7 +405,7 @@ public sealed partial class RespiratorSystem : EntitySystem
         }
     }
 
-    private void OnStopSuffocating(Entity<BodyComponent> ent, ref StopSuffocatingEvent args)
+    private void OnStopSuffocating(Entity<SLBodyComponent> ent, ref StopSuffocatingEvent args)
     {
         // TODO: This is not going work with multiple different lungs, if that ever becomes a possibility
         var organs = _bodySystem.GetBodyOrganEntityComps<LungComponent>((ent, null));
@@ -429,7 +430,7 @@ public sealed partial class RespiratorSystem : EntitySystem
         ent.Comp.UpdateIntervalMultiplier = args.Multiplier;
     }
 
-    private void OnGasInhaled(Entity<BodyComponent> entity, ref InhaledGasEvent args)
+    private void OnGasInhaled(Entity<SLBodyComponent> entity, ref InhaledGasEvent args)
     {
         if (args.Handled)
             return;
@@ -439,7 +440,7 @@ public sealed partial class RespiratorSystem : EntitySystem
         args.Succeeded = TryInhaleGasToBody((entity, entity.Comp), args.Gas);
     }
 
-    private void OnGasExhaled(Entity<BodyComponent> entity, ref ExhaledGasEvent args)
+    private void OnGasExhaled(Entity<SLBodyComponent> entity, ref ExhaledGasEvent args)
     {
         if (args.Handled)
             return;
