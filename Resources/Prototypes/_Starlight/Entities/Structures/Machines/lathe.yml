@@ -215,6 +215,7 @@
     dynamicPacks:
     - StarlightAutolatheLootable
     - StarlightProtolatheLootable
+    - BotanyTools
     - Janitor
     - Instruments
     - WirelessCameraHandheld

@@ -1094,6 +1094,9 @@
   id: PKAUpgrade # UpgradeableGun whitelist for WeaponProtoKineticAccelerator.
 
 - type: Tag
+  id: PlantAnalyzer
+
+- type: Tag
   id: PlantBGone # Storage whitelist: ClothingBeltPlant. ItemMapper: ClothingBeltPlant
 
 - type: Tag

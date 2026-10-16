@@ -352,6 +352,8 @@
         weight: 0.8 # Starlight, lower because you can make an explosion with it
       - id: GeigerCounter
       - id: trayScanner
+      - id: PlantAnalyzer
+        weight: 0.1
       - id: HandheldGPSBasic
       - id: HandLabeler
       - id: GlowstickGreen
